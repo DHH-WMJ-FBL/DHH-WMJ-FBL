@@ -48,7 +48,7 @@ Window {
 
             //写出“楚河汉界”
             ctx.font = "20px sans-serif"
-            ctx.fillStyle = "gray"
+            ctx.fillStyle = "red"
             ctx.fillText("楚 河", width / 4 - 20, margin + 5 * cellHeight - 10)
             ctx.fillText("汉 界", 3 * width / 4 - 20, margin + 5 * cellHeight - 10)
 

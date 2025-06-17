@@ -15,6 +15,16 @@ qt_add_qml_module(appChess
     VERSION 1.0
     SOURCES     main.cpp
     QML_FILES   Main.qml
+    QML_FILES chessman.qml
+    SOURCES ChessMan.h
+    SOURCES Rook.h
+    SOURCES King.h
+    SOURCES Horse.h
+    SOURCES Cannon.h
+    SOURCES Elephant.h
+    SOURCES Advisor.h
+    SOURCES Soldier.h
+    SOURCES ChessInitializer.h
 )
 
 target_compile_features(appChess PRIVATE cxx_std_23)
