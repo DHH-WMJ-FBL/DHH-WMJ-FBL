@@ -1,39 +1,38 @@
 #pragma once
 #include "ChessMan.h"
 
-class King : public ChessMan
-{
+class King : public ChessMan {
     Q_OBJECT
 
 public:
-    explicit King(
-        QString name, QString color, int x, int y, QString icon, QObject* parent = nullptr)
-        : ChessMan(name, color, x, y, icon, parent)
-    {}
-    //判断能否移动
-    bool canMove(int targetX, int targetY, const QList<QObject*>& allPieces)
-    {
-        int dx = abs(targetX - m_x);
-        int dy = abs(targetY - m_y);
+    using ChessMan::ChessMan; // 继承构造函数
 
-        // 移动必须是横向或纵向一格
-        if ((dx == 1 && dy == 0) || (dx == 0 && dy == 1)) {
-            // 判断是否在九宫格内
-            if ((m_color == "红" || m_color == "red") &&
-                (targetX >= 3 && targetX <= 5 && targetY >= 7 && targetY <= 9)) {
-                return !isSameColorPieceAt(targetX, targetY, allPieces);
-            } else if ((m_color == "黑" || m_color == "black") &&
-                       (targetX >= 3 && targetX <= 5 && targetY >= 0 && targetY <= 2)) {
-                return !isSameColorPieceAt(targetX, targetY, allPieces);
-            }
+    bool canMove(int targetX, int targetY, ChessMan* board[10][9]) override {
+        int dx = abs(targetX - x());
+        int dy = abs(targetY - y());
+
+        // 只能横或竖走一格
+        if (!((dx == 1 && dy == 0) || (dx == 0 && dy == 1)))
+            return false;
+
+        // 判断是否在九宫格内
+        if ((color() == "红" || color() == "red")) {
+            if (targetX < 3 || targetX > 5 || targetY < 7 || targetY > 9)
+                return false;
+        } else if ((color() == "黑" || color() == "black")) {
+            if (targetX < 3 || targetX > 5 || targetY < 0 || targetY > 2)
+                return false;
         }
 
-        return false;
+        // 是否己方棋子
+        if (isSameColorPieceAt(targetX, targetY, board))
+            return false;
+
+        return true;
     }
-    //移动棋子（会更新allPieces）
-    bool moveTo(int targetX, int targetY, const QList<QObject*>& allPieces)
-    {
-        if (canMove(targetX, targetY, allPieces)) {
+
+    bool moveTo(int targetX, int targetY, ChessMan* board[10][9]) override {
+        if (canMove(targetX, targetY, board)) {
             setX(targetX);
             setY(targetY);
             return true;
@@ -41,15 +40,23 @@ public:
         return false;
     }
 
-private:
-    //防止相同颜色重叠
-    bool isSameColorPieceAt(int x, int y, const QList<QObject*>& allPieces) const
-    {
+    // QML 兼容版本
+    bool canMove(int targetX, int targetY, const QList<QObject*>& allPieces) override {
+        ChessMan* board[10][9] = {};
         for (QObject* obj : allPieces) {
-            ChessMan* piece = qobject_cast<ChessMan*>(obj);
-            if (piece && piece->x() == x && piece->y() == y && piece != this) {
-                return piece->color() == this->color();
+            auto* piece = qobject_cast<ChessMan*>(obj);
+            if (piece) {
+                board[piece->y()][piece->x()] = piece;
             }
+        }
+        return canMove(targetX, targetY, board);
+    }
+
+    bool moveTo(int targetX, int targetY, const QList<QObject*>& allPieces) override {
+        if (canMove(targetX, targetY, allPieces)) {
+            setX(targetX);
+            setY(targetY);
+            return true;
         }
         return false;
     }

@@ -8,24 +8,27 @@ public:
     explicit Advisor(QString name, QString color, int x, int y, QString icon, QObject* parent = nullptr)
         : ChessMan(name, color, x, y, icon, parent) {}
 
-    bool canMove(int targetX, int targetY, const QList<QObject*>& allPieces) {
+    //使用二维数组判断合法性
+    bool canMove(int targetX, int targetY, ChessMan* board[10][9]) override {
         int dx = abs(targetX - m_x);
         int dy = abs(targetY - m_y);
 
-        if (dx == 1 && dy == 1) {
-            if ((color() == "红" || color() == "red") &&
-                targetX >= 3 && targetX <= 5 && targetY >= 7 && targetY <= 9) {
-                return !isSameColorPieceAt(targetX, targetY, allPieces);
-            } else if ((color() == "黑" || color() == "black") &&
-                       targetX >= 3 && targetX <= 5 && targetY >= 0 && targetY <= 2) {
-                return !isSameColorPieceAt(targetX, targetY, allPieces);
-            }
+        // 必须斜着走一步
+        if (dx != 1 || dy != 1) return false;
+
+        if ((color() == "红" || color() == "red") &&
+            targetX >= 3 && targetX <= 5 && targetY >= 7 && targetY <= 9) {
+            return !isSameColorPieceAt(targetX, targetY, board);
+        } else if ((color() == "黑" || color() == "black") &&
+                   targetX >= 3 && targetX <= 5 && targetY >= 0 && targetY <= 2) {
+            return !isSameColorPieceAt(targetX, targetY, board);
         }
+
         return false;
     }
 
-    bool moveTo(int targetX, int targetY, const QList<QObject*>& allPieces) {
-        if (canMove(targetX, targetY, allPieces)) {
+    bool moveTo(int targetX, int targetY, ChessMan* board[10][9]) override {
+        if (canMove(targetX, targetY, board)) {
             setX(targetX);
             setY(targetY);
             return true;
@@ -33,12 +36,22 @@ public:
         return false;
     }
 
-private:
-    bool isSameColorPieceAt(int x, int y, const QList<QObject*>& allPieces) const {
+    bool canMove(int targetX, int targetY, const QList<QObject*>& allPieces) override {
+        ChessMan* board[10][9] = {};
         for (QObject* obj : allPieces) {
-            ChessMan* piece = qobject_cast<ChessMan*>(obj);
-            if (piece && piece->x() == x && piece->y() == y && piece != this)
-                return piece->color() == this->color();
+            auto* piece = qobject_cast<ChessMan*>(obj);
+            if (piece) {
+                board[piece->y()][piece->x()] = piece;
+            }
+        }
+        return canMove(targetX, targetY, board);
+    }
+
+    bool moveTo(int targetX, int targetY, const QList<QObject*>& allPieces) override {
+        if (canMove(targetX, targetY, allPieces)) {
+            setX(targetX);
+            setY(targetY);
+            return true;
         }
         return false;
     }

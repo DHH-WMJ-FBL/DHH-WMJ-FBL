@@ -1,27 +1,36 @@
 #pragma once
 #include "ChessMan.h"
-//马类
+
 class Horse : public ChessMan {
     Q_OBJECT
 
 public:
-    // 构造函数，传入名字、颜色、初始坐标
-    explicit Horse(QString name, QString color, int x, int y, QString icon, QObject* parent = nullptr)
-        : ChessMan(name, color, x, y, icon, parent) {}
+    using ChessMan::ChessMan;
 
-    bool canMove(int targetX, int targetY, const QList<QObject*>& allPieces) {
-        int dx = targetX - m_x;
-        int dy = targetY - m_y;
+    bool canMove(int targetX, int targetY, ChessMan* board[10][9]) override {
+        int dx = targetX - x();
+        int dy = targetY - y();
 
-        if ((abs(dx) == 1 && abs(dy) == 2 && !isPieceAt(m_x, m_y + dy / 2, allPieces)) ||
-            (abs(dx) == 2 && abs(dy) == 1 && !isPieceAt(m_x + dx / 2, m_y, allPieces))) {
-            return !isSameColorPieceAt(targetX, targetY, allPieces);
+        // 马走日（判断蹩马腿）
+        if (abs(dx) == 1 && abs(dy) == 2) {
+            int blockY = y() + dy / 2;
+            if (board[blockY][x()] != nullptr) return false;
+        } else if (abs(dx) == 2 && abs(dy) == 1) {
+            int blockX = x() + dx / 2;
+            if (board[y()][blockX] != nullptr) return false;
+        } else {
+            return false;
         }
-        return false;
+
+        // 是否己方棋子
+        if (isSameColorPieceAt(targetX, targetY, board))
+            return false;
+
+        return true;
     }
 
-    bool moveTo(int targetX, int targetY, const QList<QObject*>& allPieces) {
-        if (canMove(targetX, targetY, allPieces)) {
+    bool moveTo(int targetX, int targetY, ChessMan* board[10][9]) override {
+        if (canMove(targetX, targetY, board)) {
             setX(targetX);
             setY(targetY);
             return true;
@@ -29,21 +38,23 @@ public:
         return false;
     }
 
-private:
-    bool isPieceAt(int x, int y, const QList<QObject*>& allPieces) const {
+    // QML用版本
+    bool canMove(int targetX, int targetY, const QList<QObject*>& allPieces) override {
+        ChessMan* board[10][9] = {};
         for (QObject* obj : allPieces) {
-            ChessMan* piece = qobject_cast<ChessMan*>(obj);
-            if (piece && piece->x() == x && piece->y() == y)
-                return true;
+            auto* piece = qobject_cast<ChessMan*>(obj);
+            if (piece) {
+                board[piece->y()][piece->x()] = piece;
+            }
         }
-        return false;
+        return canMove(targetX, targetY, board);
     }
 
-    bool isSameColorPieceAt(int x, int y, const QList<QObject*>& allPieces) const {
-        for (QObject* obj : allPieces) {
-            ChessMan* piece = qobject_cast<ChessMan*>(obj);
-            if (piece && piece->x() == x && piece->y() == y && piece != this)
-                return piece->color() == this->color();
+    bool moveTo(int targetX, int targetY, const QList<QObject*>& allPieces) override {
+        if (canMove(targetX, targetY, allPieces)) {
+            setX(targetX);
+            setY(targetY);
+            return true;
         }
         return false;
     }

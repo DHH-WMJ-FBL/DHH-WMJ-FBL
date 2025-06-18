@@ -1,47 +1,35 @@
 #pragma once
 #include "ChessMan.h"
 
-class Elephant : public ChessMan
-{
+class Elephant : public ChessMan {
     Q_OBJECT
 
 public:
-    explicit Elephant(
-        QString name, QString color, int x, int y, QString icon, QObject* parent = nullptr)
-        : ChessMan(name, color, x, y, icon, parent)
-    {}
+    using ChessMan::ChessMan; // 继承构造函数
 
-    // 判断是否能移动
-    bool canMove(int targetX, int targetY, const QList<QObject*>& allPieces) override
-    {
-        int dx = targetX - m_x;
-        int dy = targetY - m_y;
+    bool canMove(int targetX, int targetY, ChessMan* board[10][9]) override {
+        int dx = targetX - x();
+        int dy = targetY - y();
 
-        // 必须是走田字格（斜着两格）
+        // 必须走田字格
         if (abs(dx) == 2 && abs(dy) == 2) {
-            // 不允许过河
-            if ((m_color == "红" || m_color == "red") && targetY <= 4)
-                return false;
-            if ((m_color == "黑" || m_color == "black") && targetY >= 5)
+            // 红方不能过河
+            if ((color() == "红" || color() == "red") && targetY <= 4)
                 return false;
 
-            // 判断象眼是否被挡
-            int eyeX = m_x + dx / 2;
-            int eyeY = m_y + dy / 2;
-            for (QObject* obj : allPieces) {
-                ChessMan* piece = qobject_cast<ChessMan*>(obj);
-                if (piece && piece->x() == eyeX && piece->y() == eyeY)
-                    return false; // 象眼被挡
-            }
+            // 黑方不能过河
+            if ((color() == "黑" || color() == "black") && targetY >= 5)
+                return false;
 
-            // 不允许走到己方棋子位置
-            for (QObject* obj : allPieces) {
-                ChessMan* piece = qobject_cast<ChessMan*>(obj);
-                if (piece && piece->x() == targetX && piece->y() == targetY && piece != this) {
-                    if (piece->color() == this->color())
-                        return false;
-                }
-            }
+            // 象眼是否被堵
+            int eyeX = x() + dx / 2;
+            int eyeY = y() + dy / 2;
+            if (board[eyeY][eyeX] != nullptr)
+                return false;
+
+            // 是否目标位置是己方棋子
+            if (isSameColorPieceAt(targetX, targetY, board))
+                return false;
 
             return true;
         }
@@ -49,9 +37,28 @@ public:
         return false;
     }
 
-    // 移动（已判断合法）
-    bool moveTo(int targetX, int targetY, const QList<QObject*>& allPieces) override
-    {
+    bool moveTo(int targetX, int targetY, ChessMan* board[10][9]) override {
+        if (canMove(targetX, targetY, board)) {
+            setX(targetX);
+            setY(targetY);
+            return true;
+        }
+        return false;
+    }
+
+    // 可选：为 QML 保留的接口
+    bool canMove(int targetX, int targetY, const QList<QObject*>& allPieces) override {
+        ChessMan* board[10][9] = {};
+        for (QObject* obj : allPieces) {
+            auto* piece = qobject_cast<ChessMan*>(obj);
+            if (piece) {
+                board[piece->y()][piece->x()] = piece;
+            }
+        }
+        return canMove(targetX, targetY, board);
+    }
+
+    bool moveTo(int targetX, int targetY, const QList<QObject*>& allPieces) override {
         if (canMove(targetX, targetY, allPieces)) {
             setX(targetX);
             setY(targetY);

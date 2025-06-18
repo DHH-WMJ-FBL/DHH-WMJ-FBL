@@ -1,23 +1,20 @@
 #pragma once
 #include <QObject>
-//默认红下黑上(棋盘)
+#include <QString>
+#include <QList>
+
+// 默认红下黑上(棋盘)
 class ChessMan : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(
-        QString name READ name CONSTANT)
-    Q_PROPERTY(
-        QString color READ color CONSTANT)
-    Q_PROPERTY(
-        int x READ x WRITE setX NOTIFY positionChanged)
-    Q_PROPERTY(
-        int y READ y WRITE setY NOTIFY positionChanged)
-    Q_PROPERTY(
-        QString icon READ icon CONSTANT)
+    Q_PROPERTY(QString name READ name CONSTANT)
+    Q_PROPERTY(QString color READ color CONSTANT)
+    Q_PROPERTY(int x READ x WRITE setX NOTIFY positionChanged)
+    Q_PROPERTY(int y READ y WRITE setY NOTIFY positionChanged)
+    Q_PROPERTY(QString icon READ icon CONSTANT)
 
 public:
-    ChessMan(
-        QString name, QString color, int x, int y, QString icon, QObject* parent = nullptr)
+    ChessMan(QString name, QString color, int x, int y, QString icon, QObject* parent = nullptr)
         : QObject(parent)
         , m_name(name)
         , m_color(color)
@@ -32,27 +29,42 @@ public:
     int y() const { return m_y; }
     QString icon() const { return m_icon; }
 
-    void setX(
-        int x)
-    {
+    void setX(int x) {
         if (m_x != x) {
             m_x = x;
             emit positionChanged();
         }
     }
-    void setY(
-        int y)
-    {
+
+    void setY(int y) {
         if (m_y != y) {
             m_y = y;
             emit positionChanged();
         }
     }
-
-    //virtual bool canMove(int targetX, int targetY) = 0;
-    //添加：纯虚函数，子类必须实现（带 allPieces 参数）
+    //能移动
     virtual bool canMove(int targetX, int targetY, const QList<QObject*>& allPieces) = 0;
+    //移动到
     virtual bool moveTo(int targetX, int targetY, const QList<QObject*>& allPieces) = 0;
+
+    // 使用 board[10][9] 提高效率
+    virtual bool canMove(int targetX, int targetY, ChessMan* board[10][9]) = 0;
+    virtual bool moveTo(int targetX, int targetY, ChessMan* board[10][9]) {
+        if (canMove(targetX, targetY, board)) {
+            // 可移动，执行更新
+            setX(targetX);
+            setY(targetY);
+            return true;
+        }
+        return false;
+    }
+
+    //判断目标格是否有相同颜色的棋子
+    bool isSameColorPieceAt(int x, int y, ChessMan* board[10][9]) const {
+        if (x < 0 || x >= 9 || y < 0 || y >= 10) return false;
+        ChessMan* piece = board[y][x];
+        return piece != nullptr && piece->color() == this->color();
+    }
 
 signals:
     void positionChanged();

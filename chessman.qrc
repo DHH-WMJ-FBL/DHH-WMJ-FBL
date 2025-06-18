@@ -1,0 +1,18 @@
+<RCC>
+    <qresource prefix="/">
+        <file>image/rook_red.png</file>
+        <file>image/horse_red.png</file>
+        <file>image/elephant_red.png</file>
+        <file>image/advisor_red.png</file>
+        <file>image/king_red.png</file>
+        <file>image/cannon_red.png</file>
+        <file>image/soldier_red.png</file>
+        <file>image/rook_black.png</file>
+        <file>image/horse_black.png</file>
+        <file>image/elephant_black.png</file>
+        <file>image/advisor_black.png</file>
+        <file>image/king_black.png</file>
+        <file>image/cannon_black.png</file>
+        <file>image/soldier_black.png</file>
+    </qresource>
+</RCC>
