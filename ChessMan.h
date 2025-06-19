@@ -2,6 +2,7 @@
 #include <QObject>
 #include <QString>
 #include <QList>
+#include <QDebug>
 
 // 默认红下黑上(棋盘)
 class ChessMan : public QObject
@@ -42,14 +43,62 @@ public:
             emit positionChanged();
         }
     }
-    //能移动
-    virtual bool canMove(int targetX, int targetY, const QList<QObject*>& allPieces) = 0;
-    //移动到
-    virtual bool moveTo(int targetX, int targetY, const QList<QObject*>& allPieces) = 0;
+    
+    // 检查目标位置是否有棋子
+    ChessMan* pieceAt(int x, int y, ChessMan* board[10][9]) const {
+        if (x < 0 || x >= 9 || y < 0 || y >= 10) return nullptr;
+        return board[y][x];
+    }
+    
+    // 判断目标位置是否有棋子，不管颜色
+    bool hasPieceAt(int x, int y, ChessMan* board[10][9]) const {
+        return pieceAt(x, y, board) != nullptr;
+    }
+    
+    //判断目标格是否有相同颜色的棋子
+    bool isSameColorPieceAt(int x, int y, ChessMan* board[10][9]) const {
+        if (x < 0 || x >= 9 || y < 0 || y >= 10) return false;
+        ChessMan* piece = board[y][x];
+        return piece != nullptr && piece->color() == this->color();
+    }
+    
+    //判断目标格是否有敌方棋子
+    bool isEnemyPieceAt(int x, int y, ChessMan* board[10][9]) const {
+        if (x < 0 || x >= 9 || y < 0 || y >= 10) return false;
+        ChessMan* piece = board[y][x];
+        return piece != nullptr && piece->color() != this->color();
+    }
+    
+    //能移动（使用棋子数组）
+    virtual bool canMove(int targetX, int targetY, const QList<QObject*>& allPieces) {
+        ChessMan* board[10][9] = {};
+        for (QObject* obj : allPieces) {
+            auto* piece = qobject_cast<ChessMan*>(obj);
+            if (piece && piece->x() >= 0 && piece->y() >= 0) {
+                board[piece->y()][piece->x()] = piece;
+            }
+        }
+        return canMove(targetX, targetY, board);
+    }
+    
+    //移动到（使用棋子数组）
+    virtual bool moveTo(int targetX, int targetY, const QList<QObject*>& allPieces) {
+        ChessMan* board[10][9] = {};
+        for (QObject* obj : allPieces) {
+            auto* piece = qobject_cast<ChessMan*>(obj);
+            if (piece && piece->x() >= 0 && piece->y() >= 0) {
+                board[piece->y()][piece->x()] = piece;
+            }
+        }
+        return moveTo(targetX, targetY, board);
+    }
 
-    // 使用 board[10][9] 提高效率
+    //能移动
     virtual bool canMove(int targetX, int targetY, ChessMan* board[10][9]) = 0;
+    
+    //移动到
     virtual bool moveTo(int targetX, int targetY, ChessMan* board[10][9]) {
+        qDebug() << "ChessMan::moveTo" << m_name << "from" << x() << y() << "to" << targetX << targetY;
         if (canMove(targetX, targetY, board)) {
             // 可移动，执行更新
             setX(targetX);
@@ -57,13 +106,6 @@ public:
             return true;
         }
         return false;
-    }
-
-    //判断目标格是否有相同颜色的棋子
-    bool isSameColorPieceAt(int x, int y, ChessMan* board[10][9]) const {
-        if (x < 0 || x >= 9 || y < 0 || y >= 10) return false;
-        ChessMan* piece = board[y][x];
-        return piece != nullptr && piece->color() == this->color();
     }
 
 signals:

@@ -14,5 +14,7 @@
         <file>image/king_black.png</file>
         <file>image/cannon_black.png</file>
         <file>image/soldier_black.png</file>
+        <file>Main.qml</file>
+        <file>chessman.qml</file>
     </qresource>
 </RCC>
