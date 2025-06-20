@@ -1,6 +1,7 @@
 #pragma once
 #include "ChessMan.h"
 #include <QDebug>
+#include <QDebug>
 
 class Cannon : public ChessMan {
     Q_OBJECT
@@ -14,21 +15,31 @@ public:
         // 必须是直线
         if (m_x != targetX && m_y != targetY) {
             qDebug() << "炮只能直线移动";
+        if (m_x != targetX && m_y != targetY) {
+            qDebug() << "炮只能直线移动";
             return false;
+        }
         }
 
         int count = countPiecesBetween(targetX, targetY, board);
         ChessMan* targetPiece = board[targetY][targetX];
         
         qDebug() << "炮移动检查 - 中间棋子数:" << count << "目标位置有棋子:" << (targetPiece != nullptr);
+        
+        qDebug() << "炮移动检查 - 中间棋子数:" << count << "目标位置有棋子:" << (targetPiece != nullptr);
 
         // 不吃子：炮路径上不能有其他棋子
         if (!targetPiece && count == 0) {
             qDebug() << "炮移动 - 路径无棋子";
+        if (!targetPiece && count == 0) {
+            qDebug() << "炮移动 - 路径无棋子";
             return true;
+        }
         }
 
         // 吃子：中间必须隔一个
+        if (targetPiece && targetPiece->color() != color() && count == 1) {
+            qDebug() << "炮吃子 - 正好隔一个棋子";
         if (targetPiece && targetPiece->color() != color() && count == 1) {
             qDebug() << "炮吃子 - 正好隔一个棋子";
             return true;
@@ -42,10 +53,22 @@ public:
             qDebug() << "炮移动失败 - 吃子时没有隔子";
         } else if (!targetPiece && count > 0) {
             qDebug() << "炮移动失败 - 移动时路径有障碍";
+        
+        if (targetPiece && targetPiece->color() == color()) {
+            qDebug() << "炮移动失败 - 目标位置是己方棋子";
+        } else if (count > 1) {
+            qDebug() << "炮移动失败 - 路径上有多个棋子";
+        } else if (targetPiece && count == 0) {
+            qDebug() << "炮移动失败 - 吃子时没有隔子";
+        } else if (!targetPiece && count > 0) {
+            qDebug() << "炮移动失败 - 移动时路径有障碍";
         }
+
 
         return false;
     }
+
+    // 使用基类的moveTo方法和canMove方法
 
     // 使用基类的moveTo方法和canMove方法
 
