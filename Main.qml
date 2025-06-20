@@ -1,7 +1,7 @@
-import QtQuick 2.15
-import QtQuick.Window 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.15
+import QtQuick
+import QtQuick.Window
+import QtQuick.Controls
+import QtQuick.Layouts
 
 Window {
     width: 700
@@ -103,6 +103,53 @@ Window {
                 source: "chessman.qml"
                 z: 1
             }
+            
+            // 将军提示
+            Rectangle {
+                id: checkIndicator
+                width: 150
+                height: 50
+                radius: 10
+                color: "#80ff0000"  // 半透明红色
+                border.color: "red"
+                border.width: 2
+                anchors.centerIn: parent
+                // 在双方回合都显示将军提示，但在游戏结束或自己被将军提示显示时不显示
+                visible: controller.isCheck && !controller.gameOver && !controller.selfCheckMove
+                
+                Text {
+                    anchors.centerIn: parent
+                    text: controller.isCheckMate ? "绝杀!" : "将军!"
+                    font.pixelSize: 24
+                    font.bold: true
+                    color: "white"
+                }
+            }
+            
+            // 自己被将军提示
+            Rectangle {
+                id: selfCheckIndicator
+                width: 150
+                height: 50
+                radius: 10
+                color: "#80ff0000"  // 半透明红色
+                border.color: "red"
+                border.width: 2
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                    bottom: parent.bottom
+                    bottomMargin: 20
+                }
+                visible: controller.selfCheckMove
+                
+                Text {
+                    anchors.centerIn: parent
+                    text: "将军!"
+                    font.pixelSize: 24
+                    font.bold: true
+                    color: "white"
+                }
+            }
         }
 
         // 右侧信息面板
@@ -143,6 +190,33 @@ Window {
                             font.bold: true
                             Layout.alignment: Qt.AlignHCenter
                         }
+                        
+                        Text {
+                            text: controller.isCheck ? (controller.isCheckMate && !controller.gameOver ? "绝杀!" : "将军!") : ""
+                            color: "red"
+                            font.bold: true
+                            visible: controller.isCheck && !controller.gameOver
+                            Layout.alignment: Qt.AlignHCenter
+                        }
+                    }
+                }
+
+                // 重新开始按钮
+                Button {
+                    Layout.fillWidth: true
+                    height: 40
+                    text: "重新开始"
+                    font.bold: true
+                    
+                    background: Rectangle {
+                        color: parent.down ? "#cccccc" : (parent.hovered ? "#dddddd" : "#eeeeee")
+                        radius: 5
+                        border.color: "gray"
+                        border.width: 1
+                    }
+                    
+                    onClicked: {
+                        controller.resetGame()
                     }
                 }
 
@@ -212,6 +286,65 @@ Window {
                                 }
                             }
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    // 胜利界面
+    Rectangle {
+        id: victoryScreen
+        anchors.fill: parent
+        color: "#80000000"  // 半透明黑色背景
+        visible: controller.gameOver
+        z: 10
+
+        Rectangle {
+            width: 300
+            height: 200
+            radius: 10
+            color: "white"
+            border.color: controller.winner === "红" ? "red" : "black"
+            border.width: 2
+            anchors.centerIn: parent
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 20
+                spacing: 15
+
+                Text {
+                    text: controller.gameOver && controller.winner && controller.isCheck ? (controller.isCheckMate ? "绝杀!" : "将军!") : "游戏结束"
+                    font.pixelSize: 24
+                    font.bold: true
+                    Layout.alignment: Qt.AlignHCenter
+                }
+
+                Text {
+                    text: controller.winner + "方胜利！"
+                    font.pixelSize: 20
+                    color: controller.winner === "红" ? "red" : "black"
+                    font.bold: true
+                    Layout.alignment: Qt.AlignHCenter
+                }
+
+                Button {
+                    text: "再来一局"
+                    font.pixelSize: 16
+                    Layout.preferredWidth: 120
+                    Layout.preferredHeight: 40
+                    Layout.alignment: Qt.AlignHCenter
+                    
+                    background: Rectangle {
+                        color: parent.down ? "#cccccc" : (parent.hovered ? "#dddddd" : "#eeeeee")
+                        radius: 5
+                        border.color: "gray"
+                        border.width: 1
+                    }
+                    
+                    onClicked: {
+                        controller.resetGame()
                     }
                 }
             }

@@ -1,6 +1,6 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.15
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
 Item {
     id: root
@@ -15,6 +15,9 @@ Item {
     property var chessData: []   // 从 C++ 注入
     property int selectedIndex: -1
     property string currentPlayer: "红" // 默认红方先行
+    property bool gameOver: false
+    property bool isCheck: false
+    property bool isCheckMate: false
     signal requestMove(int fromIndex, int toX, int toY)
 
     // 调试函数，列出所有棋子
@@ -30,6 +33,12 @@ Item {
 
     // 棋盘点击事件处理 - 简化版本
     function handleBoardClick(mouseX, mouseY) {
+        // 如果游戏已结束，不处理点击事件
+        if (root.gameOver) {
+            console.log("游戏已结束，不处理点击事件");
+            return;
+        }
+        
         console.log("处理棋盘点击:", mouseX, mouseY)
         
         const boardX = Math.round((mouseX - offsetX) / cellWidth)
@@ -127,6 +136,7 @@ Item {
             id: pieceItem
             property int index: model.index
             property bool isCurrentPlayerPiece: modelData ? modelData.color === controller.currentPlayer : false
+            property bool isKing: modelData ? modelData.name.indexOf("King") !== -1 : false
             
             visible: modelData && modelData.x >= 0 && modelData.y >= 0
             width: cellWidth
@@ -159,14 +169,29 @@ Item {
                 border.width: 1
                 radius: width / 2
                 opacity: 0.5
-                visible: isCurrentPlayerPiece && root.selectedIndex !== index
+                visible: isCurrentPlayerPiece && root.selectedIndex !== index && !root.gameOver
             }
+            
+                            // 将军状态下的将/帅添加特殊高亮
+                Rectangle {
+                    anchors.fill: parent
+                    color: "transparent"
+                    border.color: "red"
+                    border.width: 3
+                    radius: width / 2
+                    opacity: 0.8
+                    // 只高亮被将军的一方的将/帅，但在双方回合都可见，游戏结束时不显示
+                    visible: isKing && controller.isCheck && modelData.color === controller.checkedPlayer && !controller.gameOver
+                }
         }
     }
 
     Component.onCompleted: {
         root.chessData = controller.getPieces()
         root.currentPlayer = controller.currentPlayer
+        root.gameOver = controller.gameOver
+        root.isCheck = controller.isCheck
+        root.isCheckMate = controller.isCheckMate
         console.log("初始化完成，棋子数量:", root.chessData.length)
         logAllPieces()
     }
@@ -190,6 +215,36 @@ Item {
             console.log("有棋子被吃掉，更新视图")
             root.chessData = controller.getPieces()
             logAllPieces()
+        }
+        
+        function onGameOverChanged() {
+            console.log("游戏状态已更改:", controller.gameOver)
+            if (controller.gameOver) {
+                console.log("游戏结束，获胜方:", controller.winner, "是否为将死:", controller.isCheckMate)
+            }
+            root.gameOver = controller.gameOver
+            root.selectedIndex = -1  // 游戏结束时清除选择
+        }
+        
+        function onIsCheckChanged() {
+            console.log("将军状态已更改:", controller.isCheck)
+            root.isCheck = controller.isCheck
+        }
+        
+        function onIsCheckMateChanged() {
+            console.log("将死状态已更改:", controller.isCheckMate)
+            root.isCheckMate = controller.isCheckMate
+            if (controller.isCheckMate) {
+                console.log("检测到将死状态，游戏结束状态:", controller.gameOver)
+            }
+        }
+        
+        function onCheckedPlayerChanged() {
+            console.log("被将军的玩家已更改:", controller.checkedPlayer)
+        }
+        
+        function onSelfCheckMoveChanged() {
+            console.log("自己被将军状态更改:", controller.selfCheckMove)
         }
     }
 
