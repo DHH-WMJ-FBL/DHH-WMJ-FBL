@@ -4,7 +4,6 @@ import QtQuick.Layouts
 
 Item {
     id: root
-    id: root
     width: 540
     height: 600
 
