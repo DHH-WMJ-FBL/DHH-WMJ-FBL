@@ -1,20 +1,22 @@
 #include "ChessController.h"
 
-ChessController::ChessController(QObject *parent)
-    : QObject(parent),
-    m_currentPlayer("红"),
-    m_roundNumber(1),
-    m_gameOver(false),
-    m_winner(""),
-    m_isCheck(false),
-    m_isCheckMate(false),
-    m_checkedPlayer(""),
-    m_selfCheckMove(false)
+ChessController::ChessController(
+    QObject* parent)
+    : QObject(parent)
+    , m_currentPlayer("红")
+    , m_roundNumber(1)
+    , m_gameOver(false)
+    , m_winner("")
+    , m_isCheck(false)
+    , m_isCheckMate(false)
+    , m_checkedPlayer("")
+    , m_selfCheckMove(false)
 {
     initializeGame();
 }
 
-void ChessController::initializeGame() {
+void ChessController::initializeGame()
+{
     // 清空棋盘
     for (int y = 0; y < 10; ++y) {
         for (int x = 0; x < 9; ++x) {
@@ -62,8 +64,8 @@ void ChessController::initializeGame() {
         ChessMan* piece = qobject_cast<ChessMan*>(obj);
         if (piece && piece->x() >= 0 && piece->y() >= 0) {
             if (m_board[piece->y()][piece->x()] != piece) {
-                qDebug() << "不一致: " << piece->name()
-                    << " at (" << piece->x() << "," << piece->y() << ")";
+                qDebug() << "不一致: " << piece->name() << " at (" << piece->x() << ","
+                         << piece->y() << ")";
                 consistent = false;
             }
         }
@@ -83,23 +85,50 @@ void ChessController::initializeGame() {
     emit isCheckMateChanged();
 }
 
-QList<QObject *> ChessController::getRawPieces() const { return m_pieces; }
+QList<QObject*> ChessController::getRawPieces() const
+{
+    return m_pieces;
+}
 
-QString ChessController::currentPlayer() const { return m_currentPlayer; }
+QString ChessController::currentPlayer() const
+{
+    return m_currentPlayer;
+}
 
-int ChessController::roundNumber() const { return m_roundNumber; }
+int ChessController::roundNumber() const
+{
+    return m_roundNumber;
+}
 
-bool ChessController::gameOver() const { return m_gameOver; }
+bool ChessController::gameOver() const
+{
+    return m_gameOver;
+}
 
-QString ChessController::winner() const { return m_winner; }
+QString ChessController::winner() const
+{
+    return m_winner;
+}
 
-bool ChessController::isCheck() const { return m_isCheck; }
+bool ChessController::isCheck() const
+{
+    return m_isCheck;
+}
 
-bool ChessController::isCheckMate() const { return m_isCheckMate; }
+bool ChessController::isCheckMate() const
+{
+    return m_isCheckMate;
+}
 
-QString ChessController::checkedPlayer() const { return m_checkedPlayer; }
+QString ChessController::checkedPlayer() const
+{
+    return m_checkedPlayer;
+}
 
-bool ChessController::selfCheckMove() const { return m_selfCheckMove; }
+bool ChessController::selfCheckMove() const
+{
+    return m_selfCheckMove;
+}
 
 QVariantList ChessController::getPieces() const
 {
@@ -114,7 +143,8 @@ QVariantList ChessController::capturedPieces() const
     return m_capturedPiecesInfo;
 }
 
-void ChessController::resetGame() {
+void ChessController::resetGame()
+{
     qDebug() << "重置游戏";
     initializeGame();
 }
@@ -131,7 +161,9 @@ ChessMan* ChessController::getKing(
     return nullptr;
 }
 
-bool ChessController::checkForCheck(const QString &color) {
+bool ChessController::checkForCheck(
+    const QString& color)
+{
     // 检查是否正在递归调用，防止无限嵌套
     static int checkDepth = 0;
     checkDepth++;
@@ -162,7 +194,7 @@ bool ChessController::checkForCheck(const QString &color) {
 
     // 检查是否有任何对方棋子可以吃掉将/帅
     int pieceChecked = 0;
-    const int maxChecks = 32; // 最大检查次数，避免无限循环
+    const int maxChecks = 32;        // 最大检查次数，避免无限循环
     QList<ChessMan*> checkingPieces; // 记录能将军的棋子
 
     for (QObject* obj : m_pieces) {
@@ -173,14 +205,15 @@ bool ChessController::checkForCheck(const QString &color) {
         }
 
         ChessMan* piece = qobject_cast<ChessMan*>(obj);
-        if (!piece) continue;
+        if (!piece)
+            continue;
 
         // 确保只检查在棋盘上的敌方棋子
         if (piece->color() != color && piece->x() >= 0 && piece->x() < 9 && piece->y() >= 0
             && piece->y() < 10 && m_board[piece->y()][piece->x()] == piece) {
             // 尝试移动前记录日志
-            qDebug() << "检查棋子是否能将军:" << piece->name()
-                     << "位置:(" << piece->x() << "," << piece->y() << ")";
+            qDebug() << "检查棋子是否能将军:" << piece->name() << "位置:(" << piece->x() << ","
+                     << piece->y() << ")";
 
             // 检查是否可以移动到将/帅位置
             bool canAttack = false;
@@ -204,7 +237,8 @@ bool ChessController::checkForCheck(const QString &color) {
     // 如果有棋子能将军
     if (!checkingPieces.isEmpty()) {
         for (auto* piece : checkingPieces) {
-            qDebug() << "将军棋子:" << piece->name() << "位置:(" << piece->x() << "," << piece->y() << ")";
+            qDebug() << "将军棋子:" << piece->name() << "位置:(" << piece->x() << "," << piece->y()
+                     << ")";
         }
         checkDepth--;
         return true;
@@ -214,7 +248,9 @@ bool ChessController::checkForCheck(const QString &color) {
     return false;
 }
 
-bool ChessController::checkForCheckMate(const QString &color) {
+bool ChessController::checkForCheckMate(
+    const QString& color)
+{
     // 检查是否正在递归调用，防止无限嵌套
     static int mateCheckDepth = 0;
     mateCheckDepth++;
@@ -247,15 +283,15 @@ bool ChessController::checkForCheckMate(const QString &color) {
 
         ChessMan* piece = qobject_cast<ChessMan*>(obj);
         // 确保只检查在棋盘上的本方棋子
-        if (!piece || piece->color() != color ||
-            piece->x() < 0 || piece->x() >= 9 ||
-            piece->y() < 0 || piece->y() >= 10) continue;
+        if (!piece || piece->color() != color || piece->x() < 0 || piece->x() >= 9 || piece->y() < 0
+            || piece->y() >= 10)
+            continue;
 
         int fromX = piece->x();
         int fromY = piece->y();
 
-        qDebug() << "检查棋子是否可以解除将军:" << piece->name()
-                 << "位置:(" << fromX << "," << fromY << ")";
+        qDebug() << "检查棋子是否可以解除将军:" << piece->name() << "位置:(" << fromX << ","
+                 << fromY << ")";
 
         // 安全计数器，限制检查的位置数量
         int positionsChecked = 0;
@@ -267,11 +303,13 @@ bool ChessController::checkForCheckMate(const QString &color) {
                 positionsChecked++;
 
                 // 跳过目标坐标就是起始坐标的情况
-                if (toX == fromX && toY == fromY) continue;
+                if (toX == fromX && toY == fromY)
+                    continue;
 
                 // 跳过明显不合法的移动（距离过远），减少不必要的计算
                 int moveDistance = abs(toX - fromX) + abs(toY - fromY);
-                if (moveDistance > 10) continue; // 象棋中正常移动距离不会太大
+                if (moveDistance > 10)
+                    continue; // 象棋中正常移动距离不会太大
 
                 try {
                     // 如果这个移动是合法的
@@ -299,8 +337,9 @@ bool ChessController::checkForCheckMate(const QString &color) {
                         int targetOldY = -99;
 
                         if (isCapture) {
-                            qDebug() << "临时移动中，暂时移除被吃掉的棋子:" << targetPiece->name()
-                                     << "位置:(" << targetPiece->x() << "," << targetPiece->y() << ")";
+                            qDebug()
+                                << "临时移动中，暂时移除被吃掉的棋子:" << targetPiece->name()
+                                << "位置:(" << targetPiece->x() << "," << targetPiece->y() << ")";
                             // 保存原始坐标
                             targetOldX = targetPiece->x();
                             targetOldY = targetPiece->y();
@@ -342,19 +381,20 @@ bool ChessController::checkForCheckMate(const QString &color) {
 
                         // 如果这个移动可以解除将军，则没有被将死
                         if (!stillInCheck) {
-                            qDebug() << "可以通过移动 " << piece->name() << " 到 (" << toX << "," << toY << ") 解除将军";
+                            qDebug() << "可以通过移动 " << piece->name() << " 到 (" << toX << ","
+                                     << toY << ") 解除将军";
                             mateCheckDepth--;
                             return false;
                         }
                     }
                 } catch (const std::exception& e) {
-                    qDebug() << "检查移动时出现C++异常:" << piece->name()
-                    << "从(" << fromX << "," << fromY << ")到(" << toX << "," << toY << ")"
-                    << " - " << e.what();
+                    qDebug() << "检查移动时出现C++异常:" << piece->name() << "从(" << fromX << ","
+                             << fromY << ")到(" << toX << "," << toY << ")"
+                             << " - " << e.what();
                     continue; // 如果出现异常，跳过这个位置
                 } catch (...) {
-                    qDebug() << "检查移动时出现未知异常:" << piece->name()
-                             << "从(" << fromX << "," << fromY << ")到(" << toX << "," << toY << ")";
+                    qDebug() << "检查移动时出现未知异常:" << piece->name() << "从(" << fromX << ","
+                             << fromY << ")到(" << toX << "," << toY << ")";
                     continue; // 如果出现异常，跳过这个位置
                 }
             }
@@ -372,8 +412,11 @@ bool ChessController::checkForCheckMate(const QString &color) {
     return true;
 }
 
-bool ChessController::canMoveResolveCheck(ChessMan *piece, int toX, int toY) {
-    if (!m_isCheck) return true; // 如果没有被将军，任何移动都可以
+bool ChessController::canMoveResolveCheck(
+    ChessMan* piece, int toX, int toY)
+{
+    if (!m_isCheck)
+        return true; // 如果没有被将军，任何移动都可以
 
     int fromX = piece->x();
     int fromY = piece->y();
@@ -456,7 +499,8 @@ bool ChessController::isKingFacingKing() const
     return true; // 照面！
 }
 
-void ChessController::updateCheckStatus() {
+void ChessController::updateCheckStatus()
+{
     // 检查当前玩家是否被将军
     bool redInCheck = checkForCheck("红");
     bool blackInCheck = checkForCheck("黑");
@@ -485,7 +529,9 @@ void ChessController::updateCheckStatus() {
     emit checkedPlayerChanged();
 }
 
-void ChessController::capturePieceAt(int x, int y, ChessMan *capturingPiece) {
+void ChessController::capturePieceAt(
+    int x, int y, ChessMan* capturingPiece)
+{
     if (x < 0 || x >= 9 || y < 0 || y >= 10) {
         qDebug() << "尝试吃掉棋子：坐标超出棋盘范围" << x << y;
         return;
@@ -536,7 +582,8 @@ void ChessController::capturePieceAt(int x, int y, ChessMan *capturingPiece) {
     emit capturedPiecesChanged();
 }
 
-void ChessController::handleMove(int fromIndex, int toX, int toY)
+void ChessController::handleMove(
+    int fromIndex, int toX, int toY)
 {
     // 如果游戏已结束，不允许移动
     if (m_gameOver) {
@@ -640,7 +687,7 @@ void ChessController::handleMove(int fromIndex, int toX, int toY)
         emit selfCheckMoveChanged();
 
         // 1秒后自动重置提示状态
-        QTimer::singleShot(1000, this, [this](){
+        QTimer::singleShot(1000, this, [this]() {
             m_selfCheckMove = false;
             emit selfCheckMoveChanged();
         });
@@ -751,8 +798,7 @@ void ChessController::handleMove(int fromIndex, int toX, int toY)
         ChessMan* p = qobject_cast<ChessMan*>(obj);
         if (p && p->x() >= 0 && p->y() >= 0) {
             if (m_board[p->y()][p->x()] != p) {
-                qDebug() << "不一致: " << p->name()
-                    << " at (" << p->x() << "," << p->y() << ")";
+                qDebug() << "不一致: " << p->name() << " at (" << p->x() << "," << p->y() << ")";
                 consistent = false;
             }
         }
@@ -763,4 +809,46 @@ void ChessController::handleMove(int fromIndex, int toX, int toY)
     qDebug() << "当前吃子记录数量:" << m_capturedPiecesInfo.size();
 
     qDebug() << "======移动处理完成======\n";
+}
+
+void ChessController::toggleAIMode()
+{
+    isAiMode = !isAiMode;
+    m_currentPlayer = "红"; // 重新设置红方为先手
+    emit currentPlayerChanged();
+
+    qDebug() << "切换为" << (isAiMode ? "人机模式" : "双人模式");
+
+    // 如果是AI模式且是AI回合，触发AI走棋
+    if (isAiMode && m_currentPlayer == "黑") {
+        switchTurn(); // AI 回合，直接让 AI 落子
+    }
+}
+
+void ChessController::switchTurn()
+{
+    // 切换当前玩家
+    m_currentPlayer = (m_currentPlayer == "红") ? "黑" : "红";
+    qDebug() << "切换当前玩家到:" << m_currentPlayer;
+    emit currentPlayerChanged();
+
+    // 如果是 AI 模式并且当前是 AI 的回合，让 AI 自动落子
+    if (isAiMode && m_currentPlayer == "黑") {
+        QTimer::singleShot(500, this, [=]() {
+            auto [piece, toX, toY] = ai.selectBestMove(m_board, "黑"); // 假设 AI 执黑
+
+            if (piece) {
+                qDebug() << "AI选择了:" << piece->name() << " 从 (" << piece->x() << ","
+                         << piece->y() << ") 移动到 (" << toX << "," << toY << ")";
+
+                if (piece->moveTo(toX, toY, m_board)) {
+                    switchTurn(); // AI 完成移动后切换回合
+                } else {
+                    qDebug() << "AI移动失败（非法）";
+                }
+            } else {
+                qDebug() << "AI无法找到可走的棋子";
+            }
+        });
+    }
 }

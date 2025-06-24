@@ -20,6 +20,7 @@ Window {
     property int offsetX: 40
     property int offsetY: 40
 
+
     RowLayout {
         anchors.fill: parent
         spacing: 10
@@ -200,6 +201,25 @@ Window {
                         }
                     }
                 }
+                Button {
+                    Layout.fillWidth: true
+                    height: 40
+                    text: "切换人机模式"
+                    font.bold: true
+
+                    background: Rectangle {
+                        color: parent.down ? "#cccccc" : (parent.hovered ? "#dddddd" : "#000000")
+                        radius: 5
+                        border.color: "gray"
+                        border.width: 1
+                    }
+
+                    onClicked: {
+                        controller.toggleAIMode()
+                        console.log(controller.isAiMode ? "进入人机对战（AI执黑）" : "切换为双人对战")
+                    }
+                }
+
 
                 // 重新开始按钮
                 Button {
@@ -209,7 +229,7 @@ Window {
                     font.bold: true
                     
                     background: Rectangle {
-                        color: parent.down ? "#cccccc" : (parent.hovered ? "#dddddd" : "#eeeeee")
+                        color: parent.down ? "#cccccc" : (parent.hovered ? "#dddddd" : "#000000")
                         radius: 5
                         border.color: "gray"
                         border.width: 1

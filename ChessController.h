@@ -8,6 +8,7 @@
 #include <QTimer>
 #include "ChessMan.h"
 #include "ChessInitializer.h"
+#include "ChessAi.h"
 
 class ChessController : public QObject
 {
@@ -67,6 +68,8 @@ public:
     void capturePieceAt(int x, int y, ChessMan* capturingPiece);
 
     Q_INVOKABLE void handleMove(int fromIndex, int toX, int toY);
+    Q_INVOKABLE void toggleAIMode();
+    Q_INVOKABLE void switchTurn();
 
 signals:
     void chessDataChanged();
@@ -92,5 +95,8 @@ private:
     bool m_isCheckMate;   // 是否处于将死状态
     QString m_checkedPlayer;
     bool m_selfCheckMove;   // 是否尝试了导致自己被将军的移动
+    bool isAiMode = false;
+    QString aiColor = "black";
+    ChessAI ai;
 };
 

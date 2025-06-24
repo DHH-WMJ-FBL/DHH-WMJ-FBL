@@ -35,6 +35,8 @@ qt_add_qml_module(appChess
     SOURCES
     SOURCES ChessController.cpp
     SOURCES Cannon.cpp
+    QML_FILES
+    SOURCES ChessAi.h ChessAi.cpp
 )
 
 target_compile_features(appChess PRIVATE cxx_std_23)

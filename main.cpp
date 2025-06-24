@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
         Qt::QueuedConnection);
 
     engine.load(QUrl(QStringLiteral("qrc:/Main.qml")));
-    
+
     if (engine.rootObjects().isEmpty()) {
         qDebug() << "Failed to load QML file";
         qDebug() << "Current directory:" << QDir::currentPath();
