@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="/qt/qml/Chess">
+    <file alias="qmldir">/root/下载/Chess/build/gcc-Debug/Chess/qmldir</file>
+  </qresource>
+</RCC>
+

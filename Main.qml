@@ -204,7 +204,7 @@ Window {
                 Button {
                     Layout.fillWidth: true
                     height: 40
-                    text: "切换人机模式"
+                    text: controller.isAiMode ? "切换双人模式" : "切换人机模式"
                     font.bold: true
 
                     background: Rectangle {
@@ -216,7 +216,7 @@ Window {
 
                     onClicked: {
                         controller.toggleAIMode()
-                        console.log(controller.isAiMode ? "进入人机对战（AI执黑）" : "切换为双人对战")
+                        console.log("切换为 " + (controller.isAiMode ? "人机对战" : "双人对战"))
                     }
                 }
 

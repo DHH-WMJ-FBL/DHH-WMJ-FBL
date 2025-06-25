@@ -1,0 +1,507 @@
+[
+    {
+        "classes": [
+            {
+                "className": "Advisor",
+                "lineNumber": 4,
+                "object": true,
+                "qualifiedClassName": "Advisor",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "ChessMan"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "Advisor.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "Cannon",
+                "lineNumber": 5,
+                "object": true,
+                "qualifiedClassName": "Cannon",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "ChessMan"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "Cannon.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "ChessController",
+                "lineNumber": 13,
+                "methods": [
+                    {
+                        "access": "public",
+                        "index": 11,
+                        "isConst": true,
+                        "name": "getPieces",
+                        "returnType": "QVariantList"
+                    },
+                    {
+                        "access": "public",
+                        "index": 12,
+                        "isConst": true,
+                        "name": "capturedPieces",
+                        "returnType": "QVariantList"
+                    },
+                    {
+                        "access": "public",
+                        "index": 13,
+                        "name": "resetGame",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "fromIndex",
+                                "type": "int"
+                            },
+                            {
+                                "name": "toX",
+                                "type": "int"
+                            },
+                            {
+                                "name": "toY",
+                                "type": "int"
+                            }
+                        ],
+                        "index": 14,
+                        "name": "handleMove",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 15,
+                        "name": "toggleAIMode",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 16,
+                        "name": "switchTurn",
+                        "returnType": "void"
+                    }
+                ],
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "name": "currentPlayer",
+                        "notify": "currentPlayerChanged",
+                        "read": "currentPlayer",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "name": "roundNumber",
+                        "notify": "roundNumberChanged",
+                        "read": "roundNumber",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "name": "capturedPieces",
+                        "notify": "capturedPiecesChanged",
+                        "read": "capturedPieces",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QVariantList",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 3,
+                        "name": "gameOver",
+                        "notify": "gameOverChanged",
+                        "read": "gameOver",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 4,
+                        "name": "winner",
+                        "notify": "winnerChanged",
+                        "read": "winner",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 5,
+                        "name": "isCheck",
+                        "notify": "isCheckChanged",
+                        "read": "isCheck",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 6,
+                        "name": "isCheckMate",
+                        "notify": "isCheckMateChanged",
+                        "read": "isCheckMate",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 7,
+                        "name": "checkedPlayer",
+                        "notify": "checkedPlayerChanged",
+                        "read": "checkedPlayer",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 8,
+                        "name": "selfCheckMove",
+                        "notify": "selfCheckMoveChanged",
+                        "read": "selfCheckMove",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 9,
+                        "name": "isAiMode",
+                        "notify": "aiModeChanged",
+                        "read": "isAiMode",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false
+                    }
+                ],
+                "qualifiedClassName": "ChessController",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "name": "chessDataChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "name": "currentPlayerChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "name": "roundNumberChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 3,
+                        "name": "capturedPiecesChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 4,
+                        "name": "gameOverChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 5,
+                        "name": "winnerChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 6,
+                        "name": "isCheckChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 7,
+                        "name": "isCheckMateChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 8,
+                        "name": "checkedPlayerChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 9,
+                        "name": "selfCheckMoveChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 10,
+                        "name": "aiModeChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "ChessController.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "ChessMan",
+                "lineNumber": 8,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "name": "name",
+                        "read": "name",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "name": "color",
+                        "read": "color",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "name": "x",
+                        "notify": "positionChanged",
+                        "read": "x",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "write": "setX"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 3,
+                        "name": "y",
+                        "notify": "positionChanged",
+                        "read": "y",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "write": "setY"
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": false,
+                        "index": 4,
+                        "name": "icon",
+                        "read": "icon",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false
+                    }
+                ],
+                "qualifiedClassName": "ChessMan",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "name": "positionChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "ChessMan.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "Elephant",
+                "lineNumber": 4,
+                "object": true,
+                "qualifiedClassName": "Elephant",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "ChessMan"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "Elephant.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "Horse",
+                "lineNumber": 4,
+                "object": true,
+                "qualifiedClassName": "Horse",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "ChessMan"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "Horse.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "King",
+                "lineNumber": 4,
+                "object": true,
+                "qualifiedClassName": "King",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "ChessMan"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "King.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "Rook",
+                "lineNumber": 5,
+                "object": true,
+                "qualifiedClassName": "Rook",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "ChessMan"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "Rook.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "Soldier",
+                "lineNumber": 4,
+                "object": true,
+                "qualifiedClassName": "Soldier",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "ChessMan"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "Soldier.h",
+        "outputRevision": 69
+    }
+]

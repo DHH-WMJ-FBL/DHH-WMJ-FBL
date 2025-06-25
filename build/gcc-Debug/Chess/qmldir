@@ -1,0 +1,5 @@
+module Chess
+typeinfo appChess.qmltypes
+prefer :/qt/qml/Chess/
+Main 1.0 Main.qml
+

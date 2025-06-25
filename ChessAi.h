@@ -1,16 +1,14 @@
 #pragma once
 #include "ChessMan.h"
-#include <vector>
 #include <tuple>
 
 class ChessAI
 {
 public:
-    std::tuple<ChessMan*, int, int> selectBestMove(ChessMan* board[10][9], const QString& aiColor);
+    // 选择最佳移动，返回:棋子指针, 目标X坐标, 目标Y坐标
+    std::tuple<ChessMan*, int, int> selectBestMove(ChessMan* board[10][9], QString playerColor);
 
 private:
-    std::vector<std::tuple<ChessMan*, int, int, int>> generateAllMoves(ChessMan* board[10][9],
-                                                                       const QString& color);
-    int evaluate(ChessMan* board[10][9], const QString& aiColor);
+    // 获取棋子价值分数
     int getScore(const QString& name);
 };

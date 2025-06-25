@@ -22,6 +22,7 @@ class ChessController : public QObject
     Q_PROPERTY(bool isCheckMate READ isCheckMate NOTIFY isCheckMateChanged)
     Q_PROPERTY(QString checkedPlayer READ checkedPlayer NOTIFY checkedPlayerChanged)
     Q_PROPERTY(bool selfCheckMove READ selfCheckMove NOTIFY selfCheckMoveChanged)
+    Q_PROPERTY(bool isAiMode READ isAiMode NOTIFY aiModeChanged)
 
 public:
     explicit ChessController(QObject* parent = nullptr);
@@ -38,6 +39,7 @@ public:
     bool isCheckMate() const;
     QString checkedPlayer() const;
     bool selfCheckMove() const;
+    bool isAiMode() const;
 
     Q_INVOKABLE QVariantList getPieces() const;
     
@@ -82,6 +84,7 @@ signals:
     void isCheckMateChanged();
     void checkedPlayerChanged();
     void selfCheckMoveChanged();
+    void aiModeChanged();
 
 private:
     ChessMan* m_board[10][9];
@@ -95,8 +98,8 @@ private:
     bool m_isCheckMate;   // 是否处于将死状态
     QString m_checkedPlayer;
     bool m_selfCheckMove;   // 是否尝试了导致自己被将军的移动
-    bool isAiMode = false;
-    QString aiColor = "black";
+    bool m_isAiMode = false;  // 是否为AI模式
+    QString aiColor = "黑";  // AI执黑
     ChessAI ai;
 };
 

@@ -1,0 +1,8 @@
+<RCC>
+  <qresource prefix="/qt/qml/Chess/">
+    <file alias="Main.qml">/root/下载/Chess/Main.qml</file>
+    <file alias="chessman.qml">/root/下载/Chess/chessman.qml</file>
+    <file alias="chessman.qrc">/root/下载/Chess/chessman.qrc</file>
+  </qresource>
+</RCC>
+

@@ -11,6 +11,8 @@ ChessController::ChessController(
     , m_isCheckMate(false)
     , m_checkedPlayer("")
     , m_selfCheckMove(false)
+    , m_isAiMode(false)
+    , aiColor("黑")
 {
     initializeGame();
 }
@@ -809,19 +811,125 @@ void ChessController::handleMove(
     qDebug() << "当前吃子记录数量:" << m_capturedPiecesInfo.size();
 
     qDebug() << "======移动处理完成======\n";
+    
+    // 在人机模式下，如果当前是AI回合，触发AI思考和移动
+    if (m_isAiMode && m_currentPlayer == aiColor) {
+        qDebug() << "人机模式下切换到" << aiColor << "方回合，1秒后触发AI移动";
+        // 使用QTimer确保UI有时间更新，并避免递归调用
+        QTimer::singleShot(1000, this, [this]() {
+            // 再次确认当前仍是AI回合且游戏未结束
+            if (m_currentPlayer == aiColor && !m_gameOver) {
+                qDebug() << "开始AI回合，直接触发AI思考...";
+                
+                // 检查AI棋子的数量和状态
+                int aiPieceCount = 0;
+                for (QObject* obj : m_pieces) {
+                    ChessMan* piece = qobject_cast<ChessMan*>(obj);
+                    if (piece && piece->color() == aiColor && piece->x() >= 0 && piece->y() >= 0) {
+                        aiPieceCount++;
+                        qDebug() << "AI棋子:" << piece->name() << "位置:(" << piece->x() << "," << piece->y() << ")";
+                    }
+                }
+                qDebug() << "AI方棋子数量:" << aiPieceCount;
+                
+                qDebug() << "调用AI的selectBestMove函数...";
+                auto [piece, toX, toY] = ai.selectBestMove(m_board, aiColor);
+
+                if (piece) {
+                    qDebug() << "AI成功选择了:" << piece->name() << " 从 (" << piece->x() << ","
+                             << piece->y() << ") 移动到 (" << toX << "," << toY << ")";
+
+                    // 验证坐标是否在有效范围内
+                    if (toX < 0 || toX >= 9 || toY < 0 || toY >= 10) {
+                        qDebug() << "错误：AI选择的目标坐标超出棋盘范围!";
+                        return;
+                    }
+                    
+                    // 验证选择的棋子是否为AI颜色
+                    if (piece->color() != aiColor) {
+                        qDebug() << "错误：AI选择了非" << aiColor << "的棋子:" << piece->color();
+                        return;
+                    }
+                    
+                    // 验证棋子是否可以移动到目标位置
+                    if (!piece->canMove(toX, toY, m_board)) {
+                        qDebug() << "错误：AI选择的移动不合法!";
+                        return;
+                    }
+
+                    // 查找棋子在pieces列表中的索引
+                    int pieceIndex = -1;
+                    for (int i = 0; i < m_pieces.size(); ++i) {
+                        ChessMan* p = qobject_cast<ChessMan*>(m_pieces[i]);
+                        if (p == piece) {
+                            pieceIndex = i;
+                            break;
+                        }
+                    }
+
+                    if (pieceIndex != -1) {
+                        qDebug() << "找到AI棋子索引:" << pieceIndex << "，调用handleMove处理移动";
+                        // 使用handleMove函数处理AI走棋，这样可以正确更新棋盘状态和处理吃子逻辑
+                        handleMove(pieceIndex, toX, toY);
+                    } else {
+                        qDebug() << "错误：无法找到AI选择的棋子在pieces列表中的索引";
+                    }
+                } else {
+                    qDebug() << "警告：AI无法找到可走的棋子!";
+                }
+            }
+        });
+    }
 }
 
 void ChessController::toggleAIMode()
 {
-    isAiMode = !isAiMode;
-    m_currentPlayer = "红"; // 重新设置红方为先手
-    emit currentPlayerChanged();
-
-    qDebug() << "切换为" << (isAiMode ? "人机模式" : "双人模式");
-
-    // 如果是AI模式且是AI回合，触发AI走棋
-    if (isAiMode && m_currentPlayer == "黑") {
-        switchTurn(); // AI 回合，直接让 AI 落子
+    m_isAiMode = !m_isAiMode;
+    
+    qDebug() << "\n======切换游戏模式======";
+    qDebug() << "切换为" << (m_isAiMode ? "人机模式" : "双人模式");
+    emit aiModeChanged(); // 发送模式变更信号
+    
+    if (m_isAiMode) {
+        qDebug() << "已开启人机模式，AI将执" << aiColor;
+        
+        // 重置游戏，确保干净的开始状态
+        resetGame();
+        
+        // 打印当前棋盘状态，帮助调试
+        qDebug() << "切换模式后的棋盘状态:";
+        for (int y = 0; y < 10; ++y) {
+            QString line;
+            for (int x = 0; x < 9; ++x) {
+                if (m_board[y][x]) {
+                    line += m_board[y][x]->name().left(2) + " ";
+                } else {
+                    line += ".. ";
+                }
+            }
+            qDebug() << line;
+        }
+        
+        // 检查黑棋的数量和状态
+        int blackCount = 0;
+        for (QObject* obj : m_pieces) {
+            ChessMan* piece = qobject_cast<ChessMan*>(obj);
+            if (piece && piece->color() == aiColor && piece->x() >= 0 && piece->y() >= 0) {
+                blackCount++;
+                qDebug() << aiColor << "棋:" << piece->name() << "位置:(" << piece->x() << "," << piece->y() << ")";
+            }
+        }
+        qDebug() << aiColor << "方棋子数量:" << blackCount;
+        
+        // 在人机模式下，红方先走
+        m_currentPlayer = "红";
+        emit currentPlayerChanged();
+        
+        qDebug() << "人机模式启用，当前玩家设为红方，等待玩家移动...";
+    } else {
+        // 切换回双人模式，重置游戏
+        resetGame();
+        qDebug() << "已切换为双人模式，游戏已重置";
     }
 }
 
@@ -829,26 +937,126 @@ void ChessController::switchTurn()
 {
     // 切换当前玩家
     m_currentPlayer = (m_currentPlayer == "红") ? "黑" : "红";
+    qDebug() << "\n======切换玩家回合======";
     qDebug() << "切换当前玩家到:" << m_currentPlayer;
     emit currentPlayerChanged();
 
     // 如果是 AI 模式并且当前是 AI 的回合，让 AI 自动落子
-    if (isAiMode && m_currentPlayer == "黑") {
-        QTimer::singleShot(500, this, [=]() {
-            auto [piece, toX, toY] = ai.selectBestMove(m_board, "黑"); // 假设 AI 执黑
+    if (m_isAiMode && m_currentPlayer == aiColor) {
+        qDebug() << "进入AI回合，等待0.5秒后AI思考...";
+        
+        // 检查AI棋子的数量和状态
+        int aiPieceCount = 0;
+        for (QObject* obj : m_pieces) {
+            ChessMan* piece = qobject_cast<ChessMan*>(obj);
+            if (piece && piece->color() == aiColor && piece->x() >= 0 && piece->y() >= 0) {
+                aiPieceCount++;
+                qDebug() << "AI棋子:" << piece->name() << "位置:(" << piece->x() << "," << piece->y() << ")";
+            }
+        }
+        qDebug() << "AI方棋子数量:" << aiPieceCount;
+        
+        // 使用定时器延迟执行，让界面有时间刷新
+        QTimer::singleShot(500, this, [this]() {
+            qDebug() << "AI开始思考移动...";
+            
+            // 打印当前棋盘状态，帮助调试
+            qDebug() << "AI思考前的棋盘状态:";
+            for (int y = 0; y < 10; ++y) {
+                QString line;
+                for (int x = 0; x < 9; ++x) {
+                    if (m_board[y][x]) {
+                        line += m_board[y][x]->name().left(2) + " ";
+                    } else {
+                        line += ".. ";
+                    }
+                }
+                qDebug() << line;
+            }
+            
+            // 再次检查当前是否仍是AI回合
+            if (m_currentPlayer != aiColor) {
+                qDebug() << "警告：AI尝试思考时发现当前不是" << aiColor << "方回合，而是" << m_currentPlayer << "方回合";
+                return;
+            }
+            
+            qDebug() << "调用AI的selectBestMove函数...";
+            auto [piece, toX, toY] = ai.selectBestMove(m_board, aiColor);
 
             if (piece) {
-                qDebug() << "AI选择了:" << piece->name() << " 从 (" << piece->x() << ","
+                qDebug() << "AI成功选择了:" << piece->name() << " 从 (" << piece->x() << ","
                          << piece->y() << ") 移动到 (" << toX << "," << toY << ")";
 
-                if (piece->moveTo(toX, toY, m_board)) {
-                    switchTurn(); // AI 完成移动后切换回合
+                // 验证坐标是否在有效范围内
+                if (toX < 0 || toX >= 9 || toY < 0 || toY >= 10) {
+                    qDebug() << "错误：AI选择的目标坐标超出棋盘范围!";
+                    return;
+                }
+                
+                // 验证选择的棋子是否为AI颜色
+                if (piece->color() != aiColor) {
+                    qDebug() << "错误：AI选择了非" << aiColor << "的棋子:" << piece->color();
+                    return;
+                }
+                
+                // 验证棋子是否可以移动到目标位置
+                if (!piece->canMove(toX, toY, m_board)) {
+                    qDebug() << "错误：AI选择的移动不合法!";
+                    return;
+                }
+
+                // 查找棋子在pieces列表中的索引
+                int pieceIndex = -1;
+                for (int i = 0; i < m_pieces.size(); ++i) {
+                    ChessMan* p = qobject_cast<ChessMan*>(m_pieces[i]);
+                    if (p == piece) {
+                        pieceIndex = i;
+                        break;
+                    }
+                }
+
+                if (pieceIndex != -1) {
+                    qDebug() << "找到AI棋子索引:" << pieceIndex << "，调用handleMove处理移动";
+                    // 使用handleMove函数处理AI走棋，这样可以正确更新棋盘状态和处理吃子逻辑
+                    handleMove(pieceIndex, toX, toY);
                 } else {
-                    qDebug() << "AI移动失败（非法）";
+                    qDebug() << "错误：无法找到AI选择的棋子在pieces列表中的索引";
+                    
+                    // 尝试通过坐标查找棋子
+                    int fromX = piece->x();
+                    int fromY = piece->y();
+                    qDebug() << "尝试通过坐标查找棋子，坐标: (" << fromX << "," << fromY << ")";
+                    
+                    if (fromX >= 0 && fromX < 9 && fromY >= 0 && fromY < 10) {
+                        ChessMan* boardPiece = m_board[fromY][fromX];
+                        if (boardPiece) {
+                            qDebug() << "在棋盘上找到棋子:" << boardPiece->name();
+                            
+                            // 再次尝试查找索引
+                            for (int i = 0; i < m_pieces.size(); ++i) {
+                                ChessMan* p = qobject_cast<ChessMan*>(m_pieces[i]);
+                                if (p == boardPiece) {
+                                    pieceIndex = i;
+                                    qDebug() << "成功找到棋子索引:" << pieceIndex;
+                                    break;
+                                }
+                            }
+                            
+                            if (pieceIndex != -1) {
+                                qDebug() << "使用找到的索引执行移动";
+                                handleMove(pieceIndex, toX, toY);
+                            }
+                        }
+                    }
                 }
             } else {
-                qDebug() << "AI无法找到可走的棋子";
+                qDebug() << "警告：AI无法找到可走的棋子!";
             }
         });
     }
+}
+
+bool ChessController::isAiMode() const
+{
+    return m_isAiMode;
 }
