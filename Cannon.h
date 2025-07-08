@@ -1,6 +1,6 @@
 #pragma once
 #include "ChessMan.h"
-#include <QDebug>
+// QDebug removed - no debug output needed
 
 class Cannon : public ChessMan {
     Q_OBJECT

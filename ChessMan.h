@@ -2,7 +2,7 @@
 #include <QObject>
 #include <QString>
 #include <QList>
-#include <QDebug>
+// QDebug removed - no debug output needed
 
 // 默认红下黑上(棋盘)
 class ChessMan : public QObject
@@ -98,7 +98,6 @@ public:
     
     //移动到
     virtual bool moveTo(int targetX, int targetY, ChessMan* board[10][9]) {
-        qDebug() << "ChessMan::moveTo" << m_name << "from" << x() << y() << "to" << targetX << targetY;
         if (canMove(targetX, targetY, board)) {
             // 可移动，执行更新
             setX(targetX);

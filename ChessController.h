@@ -4,11 +4,19 @@
 #include <QVariantList>
 #include <QVector>
 #include <QString>
-#include <QDebug>
+// QDebug removed - no longer needed
 #include <QTimer>
 #include "ChessMan.h"
 #include "ChessInitializer.h"
 #include "ChessAi.h"
+
+struct CapturePieceInfo {
+    QString name;
+    QString color;
+    QString icon;
+    QString capturedBy;
+    int round;
+};
 
 class ChessController : public QObject
 {
@@ -28,9 +36,9 @@ public:
     explicit ChessController(QObject* parent = nullptr);
 
     void initializeGame();
-
     QList<QObject*> getRawPieces() const;
     
+    // Property getters
     QString currentPlayer() const;
     int roundNumber() const;
     bool gameOver() const;
@@ -41,37 +49,23 @@ public:
     bool selfCheckMove() const;
     bool isAiMode() const;
 
+    // QML invokable methods
     Q_INVOKABLE QVariantList getPieces() const;
-    
     Q_INVOKABLE QVariantList capturedPieces() const;
-    
-    // 重置游戏
     Q_INVOKABLE void resetGame();
-    
-    // 获取指定颜色的将/帅
-    ChessMan* getKing(const QString& color) const;
-
-    // 检查指定颜色是否被将军
-    bool checkForCheck(const QString& color);
-    
-    // 检查指定颜色是否被将死
-    bool checkForCheckMate(const QString& color);
-    
-    // 检查当前移动是否能解除将军状态
-    bool canMoveResolveCheck(ChessMan* piece, int toX, int toY);
-
-    //照面规则
-    bool isKingFacingKing() const;
-
-    // 更新将军和将死状态
-    void updateCheckStatus();
-
-    // 直接吃掉指定位置的棋子
-    void capturePieceAt(int x, int y, ChessMan* capturingPiece);
-
     Q_INVOKABLE void handleMove(int fromIndex, int toX, int toY);
     Q_INVOKABLE void toggleAIMode();
     Q_INVOKABLE void switchTurn();
+    // AI depth and time limit functions removed - not needed for current implementation
+
+    // Game logic methods
+    ChessMan* getKing(const QString& color) const;
+    bool checkForCheck(const QString& color);
+    bool checkForCheckMate(const QString& color);
+    bool canMoveResolveCheck(ChessMan* piece, int toX, int toY);
+    bool isKingFacingKing() const;
+    void updateCheckStatus();
+    void capturePieceAt(int x, int y, ChessMan* capturingPiece);
 
 signals:
     void chessDataChanged();
@@ -91,15 +85,15 @@ private:
     QList<QObject*> m_pieces;
     QString m_currentPlayer;
     int m_roundNumber;
-    QVariantList m_capturedPiecesInfo; // 存储被吃掉的棋子信息
+    QList<CapturePieceInfo> m_capturedPiecesInfo;
     bool m_gameOver;
     QString m_winner;
-    bool m_isCheck;       // 是否处于将军状态
-    bool m_isCheckMate;   // 是否处于将死状态
+    bool m_isCheck;
+    bool m_isCheckMate;
     QString m_checkedPlayer;
-    bool m_selfCheckMove;   // 是否尝试了导致自己被将军的移动
-    bool m_isAiMode = false;  // 是否为AI模式
-    QString aiColor = "黑";  // AI执黑
+    bool m_selfCheckMove;
+    bool m_isAiMode = false;
+    QString aiColor = "黑";
     ChessAI ai;
 };
 

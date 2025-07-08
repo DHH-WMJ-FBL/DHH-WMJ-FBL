@@ -39,7 +39,7 @@
         "classes": [
             {
                 "className": "ChessController",
-                "lineNumber": 13,
+                "lineNumber": 21,
                 "methods": [
                     {
                         "access": "public",

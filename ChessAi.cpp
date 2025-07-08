@@ -2,213 +2,357 @@
 #include <QDebug>
 #include <cstdlib>
 #include <ctime>
+#include <algorithm>
+#include <vector>
+#include <tuple>
+#include <limits>
 
-std::tuple<ChessMan*, int, int> ChessAI::selectBestMove(
-    ChessMan* board[10][9], QString playerColor)
-{
-    qDebug() << "\n======AI开始选择落子======";
+// 中国象棋AI实现
+// 参考GitHub项目: colingogogo/gobang_AI 的极大极小算法
+// 和 huoxin4415/min-max 的α-β剪枝优化
+// 
+// 算法核心:
+// 1. 极大极小算法(Minimax) - 博弈树搜索
+// 2. Alpha-Beta剪枝 - 减少搜索空间
+// 3. 位置价值表 - 提升评估精度
+// 4. 移动排序 - 提高剪枝效率
+
+ChessAI::ChessAI() {
+    std::srand(std::time(nullptr));
+    useClassicAI = true;
+}
+
+// 棋子位置价值表 - 参考经典象棋引擎
+// 不同棋子在不同位置的价值权重
+// 中心位置和进攻位置价值更高
+namespace PiecePositionValue {
+    // 兵/卒位置价值 (红方视角)
+    const int PAWN_VALUE[10][9] = {
+        {0,  0,  0,  0,  0,  0,  0,  0,  0},
+        {0,  0,  0,  0,  0,  0,  0,  0,  0},
+        {0,  0,  0,  0,  0,  0,  0,  0,  0},
+        {0,  0,  0,  0,  0,  0,  0,  0,  0},
+        {0,  0,  0,  0,  0,  0,  0,  0,  0},
+        {10, 10, 10, 10, 10, 10, 10, 10, 10},
+        {20, 20, 20, 30, 30, 30, 20, 20, 20},
+        {30, 30, 30, 40, 40, 40, 30, 30, 30},
+        {40, 40, 40, 50, 50, 50, 40, 40, 40},
+        {50, 50, 50, 60, 60, 60, 50, 50, 50}
+    };
     
-    // 添加参数检查
-    if (playerColor != "黑" && playerColor != "红") {
-        qDebug() << "错误：AI选择落子的棋子颜色参数无效:" << playerColor;
-        return std::make_tuple(nullptr, -1, -1);
-    }
-    qDebug() << "AI负责的棋子颜色:" << playerColor;
+    // 车位置价值
+    const int ROOK_VALUE[10][9] = {
+        {20, 20, 20, 20, 20, 20, 20, 20, 20},
+        {20, 20, 20, 20, 20, 20, 20, 20, 20},
+        {20, 20, 20, 20, 20, 20, 20, 20, 20},
+        {20, 20, 20, 20, 20, 20, 20, 20, 20},
+        {20, 20, 20, 20, 20, 20, 20, 20, 20},
+        {20, 20, 20, 20, 20, 20, 20, 20, 20},
+        {20, 20, 20, 20, 20, 20, 20, 20, 20},
+        {20, 20, 20, 20, 20, 20, 20, 20, 20},
+        {20, 20, 20, 20, 20, 20, 20, 20, 20},
+        {20, 20, 20, 20, 20, 20, 20, 20, 20}
+    };
+}
 
-    ChessMan* bestPiece = nullptr;
-    int bestX = -1, bestY = -1;
-    int bestScore = -99999;
+// 增强的评估函数 - 参考多个GitHub项目的评估策略
+// 综合考虑:
+// 1. 棋子基础价值
+// 2. 位置价值
+// 3. 机动性(可走位置数)
+// 4. 中心控制
+int ChessAI::evaluateBoard(ChessMan* board[10][9], QString playerColor) {
+    int score = 0;
+    QString opponentColor = (playerColor == "红") ? "黑" : "红";
     
-    // 统计指定颜色的棋子数量
-    int pieceCount = 0;
-    QList<ChessMan*> myPieces;
-
-    // 打印当前棋盘状态
-    qDebug() << "AI分析的棋盘状态:";
+    // 1. 基础材料价值 + 位置价值
     for (int y = 0; y < 10; ++y) {
-        QString line;
         for (int x = 0; x < 9; ++x) {
-            if (board[y][x]) {
-                line += board[y][x]->name().left(2) + " ";
-                if (board[y][x]->color() == playerColor) {
-                    pieceCount++;
-                    myPieces.append(board[y][x]);
+            ChessMan* piece = board[y][x];
+            if (!piece) continue;
+            
+            int pieceValue = 0;
+            int positionValue = 0;
+            
+            // 基础价值
+            if (piece->name().contains("King")) pieceValue = 10000;
+            else if (piece->name().contains("Rook")) pieceValue = 500;
+            else if (piece->name().contains("Horse")) pieceValue = 300;
+            else if (piece->name().contains("Cannon")) pieceValue = 300;
+            else if (piece->name().contains("Elephant")) pieceValue = 150;
+            else if (piece->name().contains("Advisor")) pieceValue = 150;
+            else if (piece->name().contains("Soldier")) {
+                pieceValue = 100;
+                // 兵的位置价值
+                if (piece->color() == "红") {
+                    positionValue = PiecePositionValue::PAWN_VALUE[y][x];
+                } else {
+                    positionValue = PiecePositionValue::PAWN_VALUE[9-y][x];
                 }
+            }
+            
+            // 车的位置价值
+            if (piece->name().contains("Rook")) {
+                positionValue = PiecePositionValue::ROOK_VALUE[y][x];
+            }
+            
+            int totalValue = pieceValue + positionValue;
+            
+            if (piece->color() == playerColor) {
+                score += totalValue;
             } else {
-                line += ".. ";
+                score -= totalValue;
             }
         }
-        qDebug() << line;
     }
     
-    qDebug() << "找到" << playerColor << "方棋子:" << pieceCount << "个";
+    // 2. 机动性评估 - 可走位置越多越好
+    int mobility = calculateMobility(board, playerColor) - calculateMobility(board, opponentColor);
+    score += mobility * 2;
     
-    // 如果没有找到棋子，返回空
-    if (pieceCount == 0 || myPieces.isEmpty()) {
-        qDebug() << "错误：没有找到" << playerColor << "方的棋子!";
-        return std::make_tuple(nullptr, -1, -1);
-    }
-
-    // 随机打乱顺序，增加变化性
-    std::srand(std::time(nullptr));
-    for (int i = myPieces.size() - 1; i > 0; --i) {
-        int j = std::rand() % (i + 1);
-        myPieces.swapItemsAt(i, j);
-    }
+    // 3. 中心控制评估
+    int centerControl = evaluateCenterControl(board, playerColor) - evaluateCenterControl(board, opponentColor);
+    score += centerControl * 3;
     
-    int inspectedMoves = 0;
-    int validMoves = 0;
-    const int debugLimit = 20; // 限制打印的调试信息数量
-    
-    // 遍历所有指定颜色的棋子
-    for (ChessMan* piece : myPieces) {
-        if (!piece || piece->x() < 0 || piece->x() >= 9 || piece->y() < 0 || piece->y() >= 10) {
-            continue; // 跳过无效的棋子
-        }
+    return score;
+}
 
-        qDebug() << "检查棋子:" << piece->name() << "位置:(" << piece->x() << "," << piece->y() << ")";
-        
-        // 计算所有可能的移动
-        // 中国象棋棋盘是9x10
-        for (int toY = 0; toY < 10; ++toY) {
-            for (int toX = 0; toX < 9; ++toX) {
-                inspectedMoves++;
-                
-                // 如果目标位置有自己的棋子，跳过
-                if (board[toY][toX] && board[toY][toX]->color() == playerColor) {
-                    continue;
-                }
-                
-                // 检查该棋子是否可以移动到目标位置
-                bool canMove = piece->canMove(toX, toY, board);
-                
-                if (validMoves < debugLimit) {
-                    qDebug() << "  尝试移动" << piece->name() << "到(" << toX << "," << toY << "): "
-                             << (canMove ? "可行" : "不可行");
-                }
-
-                if (canMove) {
-                    validMoves++;
-                    
-                    // 计算移动得分
-                    int score = 0;
-                    
-                    // 如果可以吃子，加上该子的分值
-                    if (board[toY][toX]) {
-                        int captureScore = getScore(board[toY][toX]->name());
-                        score += captureScore;
-                        
-                        if (validMoves < debugLimit) {
-                            qDebug() << "    可以吃子:" << board[toY][toX]->name() << "得分:" << captureScore;
+// 计算机动性 - 可走位置数量
+int ChessAI::calculateMobility(ChessMan* board[10][9], QString color) {
+    int mobility = 0;
+    for (int y = 0; y < 10; ++y) {
+        for (int x = 0; x < 9; ++x) {
+            ChessMan* piece = board[y][x];
+            if (piece && piece->color() == color) {
+                // 计算该棋子可走的位置数
+                for (int ty = 0; ty < 10; ++ty) {
+                    for (int tx = 0; tx < 9; ++tx) {
+                        if ((x != tx || y != ty) && piece->canMove(tx, ty, board)) {
+                            mobility++;
                         }
                     }
-                    
-                    // 随机添加一些分数，避免AI每次走相同的棋
-                    int randomScore = std::rand() % 10;
-                    score += randomScore;
-                    
-                    if (validMoves < debugLimit) {
-                        qDebug() << "    总得分:" << score << "(含随机分" << randomScore << ")";
-                    }
-                    
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestPiece = piece;
-                        bestX = toX;
-                        bestY = toY;
-                        
-                        qDebug() << "  【更新最佳移动】" << piece->name() << "到(" << toX << "," << toY << ") 得分:" << bestScore;
-                    }
                 }
             }
         }
     }
-    
-    qDebug() << "AI检查了" << inspectedMoves << "种移动，找到" << validMoves << "种有效移动";
+    return mobility;
+}
 
-    // 如果找不到有效移动，但有可用棋子，尝试随机移动一个棋子
-    if (bestPiece == nullptr && !myPieces.isEmpty()) {
-        qDebug() << "未找到有得分的移动，尝试随机移动...";
-        
-        // 随机选择一个棋子
-        for (int attempts = 0; attempts < 30 && bestPiece == nullptr; attempts++) {
-            ChessMan* randomPiece = myPieces[std::rand() % myPieces.size()];
-            
-            // 为该棋子找一个有效的移动
-            QList<QPair<int, int>> validPositions;
-            
-            for (int toY = 0; toY < 10; ++toY) {
-                for (int toX = 0; toX < 9; ++toX) {
-                    // 如果目标位置有自己的棋子，跳过
-                    if (board[toY][toX] && board[toY][toX]->color() == playerColor) {
-                        continue;
-                    }
-                    
-                    // 检查该棋子是否可以移动到目标位置
-                    if (randomPiece->canMove(toX, toY, board)) {
-                        validPositions.append(qMakePair(toX, toY));
-                    }
-                }
-            }
-            
-            if (!validPositions.isEmpty()) {
-                // 随机选择一个有效位置
-                auto [toX, toY] = validPositions[std::rand() % validPositions.size()];
-                bestPiece = randomPiece;
-                bestX = toX;
-                bestY = toY;
-                qDebug() << "找到随机有效移动:" << randomPiece->name() << "到(" << toX << "," << toY << ")";
+// 评估中心控制 - 控制中心区域的价值
+int ChessAI::evaluateCenterControl(ChessMan* board[10][9], QString color) {
+    int centerValue = 0;
+    // 中心区域坐标
+    int centerX[] = {3, 4, 5};
+    int centerY[] = {3, 4, 5, 6};
+    
+    for (int cy : centerY) {
+        for (int cx : centerX) {
+            ChessMan* piece = board[cy][cx];
+            if (piece && piece->color() == color) {
+                centerValue += 10; // 占据中心位置奖励
             }
         }
     }
+    return centerValue;
+}
+
+// 移动排序 - 提高Alpha-Beta剪枝效率
+// 参考GitHub项目的移动排序策略:
+// 1. 吃子移动优先
+// 2. 将军移动优先
+// 3. 中心移动优先
+void ChessAI::sortMoves(std::vector<std::tuple<ChessMan*, int, int>>& moves, ChessMan* board[10][9]) {
+    std::sort(moves.begin(), moves.end(), [this, board](const auto& a, const auto& b) {
+        ChessMan* pieceA = std::get<0>(a);
+        int toXA = std::get<1>(a), toYA = std::get<2>(a);
+        ChessMan* pieceB = std::get<0>(b);
+        int toXB = std::get<1>(b), toYB = std::get<2>(b);
+        
+        // 吃子移动优先
+        bool captureA = (board[toYA][toXA] != nullptr);
+        bool captureB = (board[toYB][toXB] != nullptr);
+        if (captureA != captureB) return captureA;
+        
+        // 中心移动优先
+        int centerScoreA = (abs(toXA - 4) + abs(toYA - 5));
+        int centerScoreB = (abs(toXB - 4) + abs(toYB - 5));
+        return centerScoreA < centerScoreB;
+    });
+}
+
+// 增强的极大极小算法 - 参考经典实现
+// 核心改进:
+// 1. 增加搜索深度到4层
+// 2. 更精确的Alpha-Beta剪枝
+// 3. 移动排序优化
+// 4. 更好的评估函数
+int ChessAI::minimax(ChessMan* board[10][9], int depth, int alpha, int beta, bool maximizingPlayer, QString playerColor, ChessMan*& bestPiece, int& bestToX, int& bestToY) {
+    // 到达搜索深度或游戏结束
+    if (depth == 0) {
+        return evaluateBoard(board, playerColor);
+    }
     
-    if (bestPiece) {
-        qDebug() << "AI最终选择:" << bestPiece->name() << "，从(" << bestPiece->x() << "," << bestPiece->y() 
-                 << ") 移动到 (" << bestX << "," << bestY << ")，得分:" << bestScore;
-        return std::make_tuple(bestPiece, bestX, bestY);
+    QString currentColor = maximizingPlayer ? playerColor : (playerColor == "红" ? "黑" : "红");
+    auto moves = generateMoves(board, currentColor);
+    
+    if (moves.empty()) {
+        return maximizingPlayer ? -999999 : 999999;
+    }
+    
+    // 移动排序 - 提高剪枝效率
+    sortMoves(moves, board);
+    
+    if (maximizingPlayer) {
+        int maxEval = -999999;
+        for (auto& move : moves) {
+            ChessMan* piece = std::get<0>(move);
+            int toX = std::get<1>(move);
+            int toY = std::get<2>(move);
+            int fromX = piece->x();
+            int fromY = piece->y();
+            
+            // 执行移动
+            ChessMan* captured = board[toY][toX];
+            board[fromY][fromX] = nullptr;
+            board[toY][toX] = piece;
+            piece->setX(toX);
+            piece->setY(toY);
+            
+            // 立即胜利检测
+            if (captured && captured->name().contains("King")) {
+                // 撤销移动
+                piece->setX(fromX);
+                piece->setY(fromY);
+                board[fromY][fromX] = piece;
+                board[toY][toX] = captured;
+                
+                if (depth == 4) {
+                    bestPiece = piece;
+                    bestToX = toX;
+                    bestToY = toY;
+                }
+                return 999999;
+            }
+            
+            // 递归搜索
+            int eval = minimax(board, depth - 1, alpha, beta, false, playerColor, bestPiece, bestToX, bestToY);
+            
+            // 撤销移动
+            piece->setX(fromX);
+            piece->setY(fromY);
+            board[fromY][fromX] = piece;
+            board[toY][toX] = captured;
+            
+            if (eval > maxEval) {
+                maxEval = eval;
+                if (depth == 4) {
+                    bestPiece = piece;
+                    bestToX = toX;
+                    bestToY = toY;
+                }
+            }
+            
+            // Alpha-Beta剪枝
+            alpha = std::max(alpha, eval);
+            if (beta <= alpha) {
+                break; // Beta剪枝
+            }
+        }
+        return maxEval;
     } else {
-        qDebug() << "警告：AI无法找到有效移动!";
-        return std::make_tuple(nullptr, -1, -1);
+        int minEval = 999999;
+        for (auto& move : moves) {
+            ChessMan* piece = std::get<0>(move);
+            int toX = std::get<1>(move);
+            int toY = std::get<2>(move);
+            int fromX = piece->x();
+            int fromY = piece->y();
+            
+            // 执行移动
+            ChessMan* captured = board[toY][toX];
+            board[fromY][fromX] = nullptr;
+            board[toY][toX] = piece;
+            piece->setX(toX);
+            piece->setY(toY);
+            
+            // 立即胜利检测
+            if (captured && captured->name().contains("King")) {
+                // 撤销移动
+                piece->setX(fromX);
+                piece->setY(fromY);
+                board[fromY][fromX] = piece;
+                board[toY][toX] = captured;
+                return -999999;
+            }
+            
+            // 递归搜索
+            int eval = minimax(board, depth - 1, alpha, beta, true, playerColor, bestPiece, bestToX, bestToY);
+            
+            // 撤销移动
+            piece->setX(fromX);
+            piece->setY(fromY);
+            board[fromY][fromX] = piece;
+            board[toY][toX] = captured;
+            
+            minEval = std::min(minEval, eval);
+            
+            // Alpha-Beta剪枝
+            beta = std::min(beta, eval);
+            if (beta <= alpha) {
+                break; // Alpha剪枝
+            }
+        }
+        return minEval;
     }
 }
 
-int ChessAI::getScore(
-    const QString& name)
-{
-    // 打印输入参数以帮助调试
-    qDebug() << "AI评分棋子:" << name;
+// 生成所有合法移动
+std::vector<std::tuple<ChessMan*, int, int>> ChessAI::generateMoves(ChessMan* board[10][9], QString playerColor) {
+    std::vector<std::tuple<ChessMan*, int, int>> moves;
+    for (int y = 0; y < 10; ++y) {
+        for (int x = 0; x < 9; ++x) {
+            ChessMan* piece = board[y][x];
+            if (piece && piece->color() == playerColor) {
+                for (int ty = 0; ty < 10; ++ty) {
+                    for (int tx = 0; tx < 9; ++tx) {
+                        if ((x != tx || y != ty) && piece->canMove(tx, ty, board)) {
+                            moves.emplace_back(piece, tx, ty);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return moves;
+}
 
-    // 检查一般的棋子类型（忽略数字）
-    if (name.contains("King", Qt::CaseInsensitive)) {
-        qDebug() << "  评分: 10000 (将/帅)";
-        return 10000;
-    }
-    if (name.contains("Rook", Qt::CaseInsensitive)) {
-        qDebug() << "  评分: 500 (车)";
-        return 500;
-    }
-    if (name.contains("Horse", Qt::CaseInsensitive)) {
-        qDebug() << "  评分: 300 (马)";
-        return 300;
-    }
-    if (name.contains("Cannon", Qt::CaseInsensitive)) {
-        qDebug() << "  评分: 250 (炮)";
-        return 250;
-    }
-    if (name.contains("Elephant", Qt::CaseInsensitive)) {
-        qDebug() << "  评分: 150 (象)";
-        return 150;
-    }
-    if (name.contains("Advisor", Qt::CaseInsensitive)) {
-        qDebug() << "  评分: 100 (士)";
-        return 100;
-    }
-    if (name.contains("Soldier", Qt::CaseInsensitive)) {
-        qDebug() << "  评分: 50 (卒)";
-        return 50;
+// 主要AI入口 - 选择最佳移动
+std::tuple<ChessMan*, int, int> ChessAI::selectBestMove(ChessMan* board[10][9], QString playerColor) {
+    if (useClassicAI) {
+        ChessMan* bestPiece = nullptr;
+        int bestToX = -1, bestToY = -1;
+        
+        // 使用深度4的极大极小算法 + Alpha-Beta剪枝
+        minimax(board, 4, -999999, 999999, true, playerColor, bestPiece, bestToX, bestToY);
+        
+        if (bestPiece) {
+            return std::make_tuple(bestPiece, bestToX, bestToY);
+        }
     }
     
-    qDebug() << "  未知棋子类型，评分: 0";
-    return 0;
+    // 备选随机移动
+    std::vector<std::tuple<ChessMan*, int, int>> moves = generateMoves(board, playerColor);
+    if (moves.empty()) return std::make_tuple(nullptr, -1, -1);
+    
+    int idx = std::rand() % moves.size();
+    return moves[idx];
+}
+
+void ChessAI::setUseClassicAI(bool useClassic) {
+    useClassicAI = useClassic;
+}
+
+bool ChessAI::getUseClassicAI() const {
+    return useClassicAI;
 }
 

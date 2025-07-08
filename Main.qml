@@ -20,6 +20,34 @@ Window {
     property int offsetX: 40
     property int offsetY: 40
 
+    // 通用按钮组件
+    component CustomButton: Rectangle {
+        property string text: ""
+        property var onClicked: function() {}
+        
+        Layout.fillWidth: true
+        height: 40
+        color: tapHandler.pressed ? "#cccccc" : (hoverHandler.hovered ? "#dddddd" : "#000000")
+        radius: 5
+        border.color: "gray"
+        border.width: 1
+
+        Text {
+            text: parent.text
+            font.bold: true
+            color: "white"
+            anchors.centerIn: parent
+        }
+
+        TapHandler {
+            id: tapHandler
+            onTapped: parent.onClicked()
+        }
+
+        HoverHandler {
+            id: hoverHandler
+        }
+    }
 
     RowLayout {
         anchors.fill: parent
@@ -39,16 +67,14 @@ Window {
                     const ctx = board.getContext("2d")
                     ctx.clearRect(0, 0, width, height)
 
-                    const cols = 9
-                    const rows = 10
-                    const margin = offsetX
+                    const cols = 9, rows = 10, margin = offsetX
                     const gridWidth = cellWidth * (cols - 1)
                     const gridHeight = cellHeight * (rows - 1)
 
                     ctx.strokeStyle = "black"
                     ctx.lineWidth = 2
 
-                    // 横线
+                    // 绘制棋盘线
                     for (let r = 0; r < rows; r++) {
                         ctx.beginPath()
                         ctx.moveTo(margin, margin + r * cellHeight)
@@ -56,7 +82,6 @@ Window {
                         ctx.stroke()
                     }
 
-                    // 竖线
                     for (let c = 0; c < cols; c++) {
                         ctx.beginPath()
                         ctx.moveTo(margin + c * cellWidth, margin)
@@ -78,14 +103,9 @@ Window {
 
                     // 将士斜线
                     function drawDiagonal(fromCol, fromRow, toCol, toRow) {
-                        let x1 = margin + fromCol * cellWidth
-                        let y1 = margin + fromRow * cellHeight
-                        let x2 = margin + toCol * cellWidth
-                        let y2 = margin + toRow * cellHeight
-
                         ctx.beginPath()
-                        ctx.moveTo(x1, y1)
-                        ctx.lineTo(x2, y2)
+                        ctx.moveTo(margin + fromCol * cellWidth, margin + fromRow * cellHeight)
+                        ctx.lineTo(margin + toCol * cellWidth, margin + toRow * cellHeight)
                         ctx.stroke()
                     }
 
@@ -107,20 +127,18 @@ Window {
             
             // 将军提示
             Rectangle {
-                id: checkIndicator
                 width: 150
                 height: 50
                 radius: 10
-                color: "#80ff0000"  // 半透明红色
+                color: "#80ff0000"
                 border.color: "red"
                 border.width: 2
                 anchors.centerIn: parent
-                // 在双方回合都显示将军提示，但在游戏结束或自己被将军提示显示时不显示
-                visible: controller.isCheck && !controller.gameOver && !controller.selfCheckMove
+                visible: controller && controller.isCheck && !controller.gameOver && !controller.selfCheckMove
                 
                 Text {
                     anchors.centerIn: parent
-                    text: controller.isCheckMate ? "绝杀!" : "将军!"
+                    text: (controller && controller.isCheckMate) ? "绝杀!" : "将军!"
                     font.pixelSize: 24
                     font.bold: true
                     color: "white"
@@ -129,11 +147,10 @@ Window {
             
             // 自己被将军提示
             Rectangle {
-                id: selfCheckIndicator
                 width: 150
                 height: 50
                 radius: 10
-                color: "#80ff0000"  // 半透明红色
+                color: "#80ff0000"
                 border.color: "red"
                 border.width: 2
                 anchors {
@@ -141,7 +158,7 @@ Window {
                     bottom: parent.bottom
                     bottomMargin: 20
                 }
-                visible: controller.selfCheckMove
+                visible: controller && controller.selfCheckMove
                 
                 Text {
                     anchors.centerIn: parent
@@ -170,7 +187,7 @@ Window {
                 Rectangle {
                     Layout.fillWidth: true
                     height: 50
-                    color: controller.currentPlayer === "红" ? "#ffdddd" : "#dddddd"
+                    color: (controller && controller.currentPlayer === "红") ? "#ffdddd" : "#dddddd"
                     radius: 5
                     border.color: "gray"
                     border.width: 1
@@ -180,63 +197,42 @@ Window {
                         spacing: 2
 
                         Text {
-                            text: "回合: " + controller.roundNumber
+                            text: "回合: " + (controller ? controller.roundNumber : "0")
                             font.bold: true
                             Layout.alignment: Qt.AlignHCenter
                         }
 
                         Text {
-                            text: "当前: " + controller.currentPlayer + "方"
-                            color: controller.currentPlayer === "红" ? "red" : "black"
+                            text: "当前: " + (controller ? controller.currentPlayer : "红") + "方"
+                            color: (controller && controller.currentPlayer === "红") ? "red" : "black"
                             font.bold: true
                             Layout.alignment: Qt.AlignHCenter
                         }
                         
                         Text {
-                            text: controller.isCheck ? (controller.isCheckMate && !controller.gameOver ? "绝杀!" : "将军!") : ""
+                            text: (controller && controller.isCheck) ? ((controller.isCheckMate && !controller.gameOver) ? "绝杀!" : "将军!") : ""
                             color: "red"
                             font.bold: true
-                            visible: controller.isCheck && !controller.gameOver
+                            visible: controller && controller.isCheck && !controller.gameOver
                             Layout.alignment: Qt.AlignHCenter
                         }
                     }
                 }
-                Button {
-                    Layout.fillWidth: true
-                    height: 40
-                    text: controller.isAiMode ? "切换双人模式" : "切换人机模式"
-                    font.bold: true
 
-                    background: Rectangle {
-                        color: parent.down ? "#cccccc" : (parent.hovered ? "#dddddd" : "#000000")
-                        radius: 5
-                        border.color: "gray"
-                        border.width: 1
-                    }
-
-                    onClicked: {
-                        controller.toggleAIMode()
-                        console.log("切换为 " + (controller.isAiMode ? "人机对战" : "双人对战"))
+                CustomButton {
+                    text: (controller && controller.isAiMode) ? "切换双人模式" : "切换人机模式"
+                    onClicked: function() {
+                        if (controller) {
+                            controller.toggleAIMode()
+                            console.log("切换为 " + (controller.isAiMode ? "人机对战" : "双人对战"))
+                        }
                     }
                 }
 
-
-                // 重新开始按钮
-                Button {
-                    Layout.fillWidth: true
-                    height: 40
+                CustomButton {
                     text: "重新开始"
-                    font.bold: true
-                    
-                    background: Rectangle {
-                        color: parent.down ? "#cccccc" : (parent.hovered ? "#dddddd" : "#000000")
-                        radius: 5
-                        border.color: "gray"
-                        border.width: 1
-                    }
-                    
-                    onClicked: {
-                        controller.resetGame()
+                    onClicked: function() {
+                        if (controller) controller.resetGame()
                     }
                 }
 
@@ -265,7 +261,7 @@ Window {
                             clip: true
                             
                             ListView {
-                                model: controller.capturedPieces
+                                model: controller ? controller.capturedPieces : []
                                 spacing: 5
                                 delegate: Rectangle {
                                     width: parent.width
@@ -314,10 +310,9 @@ Window {
 
     // 胜利界面
     Rectangle {
-        id: victoryScreen
         anchors.fill: parent
-        color: "#80000000"  // 半透明黑色背景
-        visible: controller.gameOver
+        color: "#80000000"
+        visible: controller && controller.gameOver
         z: 10
 
         Rectangle {
@@ -325,7 +320,7 @@ Window {
             height: 200
             radius: 10
             color: "white"
-            border.color: controller.winner === "红" ? "red" : "black"
+            border.color: (controller && controller.winner === "红") ? "red" : "black"
             border.width: 2
             anchors.centerIn: parent
 
@@ -335,36 +330,45 @@ Window {
                 spacing: 15
 
                 Text {
-                    text: controller.gameOver && controller.winner && controller.isCheck ? (controller.isCheckMate ? "绝杀!" : "将军!") : "游戏结束"
+                    text: (controller && controller.gameOver && controller.winner && controller.isCheck) ? (controller.isCheckMate ? "绝杀!" : "将军!") : "游戏结束"
                     font.pixelSize: 24
                     font.bold: true
                     Layout.alignment: Qt.AlignHCenter
                 }
 
                 Text {
-                    text: controller.winner + "方胜利！"
+                    text: (controller ? controller.winner : "红") + "方胜利！"
                     font.pixelSize: 20
-                    color: controller.winner === "红" ? "red" : "black"
+                    color: (controller && controller.winner === "红") ? "red" : "black"
                     font.bold: true
                     Layout.alignment: Qt.AlignHCenter
                 }
 
-                Button {
-                    text: "再来一局"
-                    font.pixelSize: 16
+                Rectangle {
                     Layout.preferredWidth: 120
                     Layout.preferredHeight: 40
                     Layout.alignment: Qt.AlignHCenter
-                    
-                    background: Rectangle {
-                        color: parent.down ? "#cccccc" : (parent.hovered ? "#dddddd" : "#eeeeee")
-                        radius: 5
-                        border.color: "gray"
-                        border.width: 1
+                    color: tapHandler.pressed ? "#cccccc" : (hoverHandler.hovered ? "#dddddd" : "#eeeeee")
+                    radius: 5
+                    border.color: "gray"
+                    border.width: 1
+
+                    Text {
+                        text: "再来一局"
+                        font.pixelSize: 16
+                        color: "black"
+                        anchors.centerIn: parent
                     }
                     
-                    onClicked: {
-                        controller.resetGame()
+                    TapHandler {
+                        id: tapHandler
+                        onTapped: {
+                            if (controller) controller.resetGame()
+                        }
+                    }
+
+                    HoverHandler {
+                        id: hoverHandler
                     }
                 }
             }

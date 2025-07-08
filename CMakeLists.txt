@@ -27,16 +27,11 @@ qt_add_qml_module(appChess
     SOURCES Advisor.h
     SOURCES Soldier.h
     SOURCES ChessInitializer.h
-    QML_FILES
-    RESOURCES
-    RESOURCES chessman.qrc
     SOURCES ChessController.h
-    SOURCES
-    SOURCES
     SOURCES ChessController.cpp
     SOURCES Cannon.cpp
-    QML_FILES
     SOURCES ChessAi.h ChessAi.cpp
+    RESOURCES chessman.qrc
 )
 
 target_compile_features(appChess PRIVATE cxx_std_23)
