@@ -43,7 +43,17 @@ void ChessController::initializeGame()
     m_checkedPlayer = "";
 
     // 初始化所有棋子
-    m_pieces = ChessInitializer::initializePieces(m_board);
+    if (m_isEndgameMode && !m_currentEndgame.isEmpty()) {
+        // 残局模式：使用EndgameInitializer
+        m_pieces = EndgameInitializer::initializeEndgame(m_currentEndgame, m_board);
+        
+        // 设置残局的先手方
+        QString firstPlayer = EndgameInitializer::getEndgameFirstPlayer(m_currentEndgame);
+        m_currentPlayer = firstPlayer;
+    } else {
+        // 标准模式：使用ChessInitializer
+        m_pieces = ChessInitializer::initializePieces(m_board);
+    }
 
     // 发送信号通知UI更新
     emit chessDataChanged();
@@ -144,7 +154,17 @@ void ChessController::resetGame()
     }
 
     // 重新初始化棋子
-    m_pieces = ChessInitializer::initializePieces(m_board);
+    if (m_isEndgameMode && !m_currentEndgame.isEmpty()) {
+        // 残局模式：使用EndgameInitializer
+        m_pieces = EndgameInitializer::initializeEndgame(m_currentEndgame, m_board);
+        
+        // 设置残局的先手方
+        QString firstPlayer = EndgameInitializer::getEndgameFirstPlayer(m_currentEndgame);
+        m_currentPlayer = firstPlayer;
+    } else {
+        // 标准模式：使用ChessInitializer
+        m_pieces = ChessInitializer::initializePieces(m_board);
+    }
 
     // 发送信号通知UI更新
     emit gameOverChanged();
@@ -538,20 +558,46 @@ void ChessController::handleMove(int fromIndex, int toX, int toY)
         return;
     }
 
-    // 检查将帅照面
-    if (piece->name().contains("King")) {
-        ChessMan* enemyKing = getKing(piece->color() == "红" ? "黑" : "红");
-        if (enemyKing && piece->x() == enemyKing->x()) {
+    // 检查移动后是否会造成王对王（所有移动都需要检查）
+    // 模拟移动后的棋盘状态
+    ChessMan* tempBoard[10][9];
+    for (int y = 0; y < 10; ++y) {
+        for (int x = 0; x < 9; ++x) {
+            tempBoard[y][x] = m_board[y][x];
+        }
+    }
+    
+    // 在临时棋盘上执行移动
+    tempBoard[fromY][fromX] = nullptr;
+    tempBoard[toY][toX] = piece;
+    
+    // 检查移动后的王对王
+    ChessMan* redKing = getKing("红");
+    ChessMan* blackKing = getKing("黑");
+    
+    if (redKing && blackKing) {
+        // 获取移动后的王的位置
+        int redKingX = (redKing == piece) ? toX : redKing->x();
+        int redKingY = (redKing == piece) ? toY : redKing->y();
+        int blackKingX = (blackKing == piece) ? toX : blackKing->x();
+        int blackKingY = (blackKing == piece) ? toY : blackKing->y();
+        
+        // 检查是否在同一列
+        if (redKingX == blackKingX) {
+            int minY = qMin(redKingY, blackKingY);
+            int maxY = qMax(redKingY, blackKingY);
+            
             bool blocked = false;
-            int minY = qMin(piece->y(), enemyKing->y());
-            int maxY = qMax(piece->y(), enemyKing->y());
             for (int y = minY + 1; y < maxY; ++y) {
-                if (m_board[y][piece->x()]) {
+                if (tempBoard[y][redKingX]) {
                     blocked = true;
                     break;
                 }
             }
-            if (!blocked) return;
+            if (!blocked) {
+                // 移动后会造成王对王，阻止移动
+                return;
+            }
         }
     }
 
@@ -713,4 +759,55 @@ void ChessController::switchTurn()
 bool ChessController::isAiMode() const
 {
     return m_isAiMode;
+}
+
+bool ChessController::isEndgameMode() const
+{
+    return m_isEndgameMode;
+}
+
+QString ChessController::currentEndgame() const
+{
+    return m_currentEndgame;
+}
+
+void ChessController::startEndgame(const QString& endgameName)
+{
+    m_isEndgameMode = true;
+    m_currentEndgame = endgameName;
+    
+    // 重新初始化游戏
+    initializeGame();
+    
+    // 发送信号通知UI更新
+    emit endgameModeChanged();
+    emit currentEndgameChanged();
+}
+
+QStringList ChessController::getEndgameList()
+{
+    return EndgameInitializer::getAvailableEndgames();
+}
+
+void ChessController::exitEndgameMode()
+{
+    m_isEndgameMode = false;
+    m_currentEndgame = "";
+    
+    // 重新初始化为标准游戏
+    initializeGame();
+    
+    // 发送信号通知UI更新
+    emit endgameModeChanged();
+    emit currentEndgameChanged();
+}
+
+QString ChessController::getEndgameDescription(const QString& endgameName)
+{
+    return EndgameInitializer::getEndgameDescription(endgameName);
+}
+
+int ChessController::getEndgameDifficulty(const QString& endgameName)
+{
+    return EndgameInitializer::getEndgameDifficulty(endgameName);
 }

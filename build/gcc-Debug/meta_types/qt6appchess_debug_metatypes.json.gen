@@ -39,25 +39,25 @@
         "classes": [
             {
                 "className": "ChessController",
-                "lineNumber": 21,
+                "lineNumber": 22,
                 "methods": [
                     {
                         "access": "public",
-                        "index": 11,
+                        "index": 13,
                         "isConst": true,
                         "name": "getPieces",
                         "returnType": "QVariantList"
                     },
                     {
                         "access": "public",
-                        "index": 12,
+                        "index": 14,
                         "isConst": true,
                         "name": "capturedPieces",
                         "returnType": "QVariantList"
                     },
                     {
                         "access": "public",
-                        "index": 13,
+                        "index": 15,
                         "name": "resetGame",
                         "returnType": "void"
                     },
@@ -77,21 +77,69 @@
                                 "type": "int"
                             }
                         ],
-                        "index": 14,
+                        "index": 16,
                         "name": "handleMove",
                         "returnType": "void"
                     },
                     {
                         "access": "public",
-                        "index": 15,
+                        "index": 17,
                         "name": "toggleAIMode",
                         "returnType": "void"
                     },
                     {
                         "access": "public",
-                        "index": 16,
+                        "index": 18,
                         "name": "switchTurn",
                         "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "endgameName",
+                                "type": "QString"
+                            }
+                        ],
+                        "index": 19,
+                        "name": "startEndgame",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 20,
+                        "name": "getEndgameList",
+                        "returnType": "QStringList"
+                    },
+                    {
+                        "access": "public",
+                        "index": 21,
+                        "name": "exitEndgameMode",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "endgameName",
+                                "type": "QString"
+                            }
+                        ],
+                        "index": 22,
+                        "name": "getEndgameDescription",
+                        "returnType": "QString"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "endgameName",
+                                "type": "QString"
+                            }
+                        ],
+                        "index": 23,
+                        "name": "getEndgameDifficulty",
+                        "returnType": "int"
                     }
                 ],
                 "object": true,
@@ -235,6 +283,34 @@
                         "stored": true,
                         "type": "bool",
                         "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 10,
+                        "name": "isEndgameMode",
+                        "notify": "endgameModeChanged",
+                        "read": "isEndgameMode",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 11,
+                        "name": "currentEndgame",
+                        "notify": "currentEndgameChanged",
+                        "read": "currentEndgame",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false
                     }
                 ],
                 "qualifiedClassName": "ChessController",
@@ -303,6 +379,18 @@
                         "access": "public",
                         "index": 10,
                         "name": "aiModeChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 11,
+                        "name": "endgameModeChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 12,
+                        "name": "currentEndgameChanged",
                         "returnType": "void"
                     }
                 ],

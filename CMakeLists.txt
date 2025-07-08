@@ -27,6 +27,8 @@ qt_add_qml_module(appChess
     SOURCES Advisor.h
     SOURCES Soldier.h
     SOURCES ChessInitializer.h
+    SOURCES EndgameInitializer.h
+    SOURCES EndgameInitializer.cpp
     SOURCES ChessController.h
     SOURCES ChessController.cpp
     SOURCES Cannon.cpp

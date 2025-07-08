@@ -236,6 +236,38 @@ Window {
                     }
                 }
 
+                CustomButton {
+                    text: controller && controller.isEndgameMode ? "退出残局" : "残局挑战"
+                    onClicked: function() {
+                        if (controller) {
+                            if (controller.isEndgameMode) {
+                                controller.exitEndgameMode()
+                            } else {
+                                endgameSelector.visible = true
+                            }
+                        }
+                    }
+                }
+
+                // 残局状态显示
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 30
+                    color: controller && controller.isEndgameMode ? "#e8f5e8" : "transparent"
+                    radius: 5
+                    border.color: controller && controller.isEndgameMode ? "#90EE90" : "transparent"
+                    border.width: 1
+                    visible: controller && controller.isEndgameMode
+
+                    Text {
+                        text: "残局: " + (controller ? controller.currentEndgame : "")
+                        font.pixelSize: 12
+                        color: "#006400"
+                        font.bold: true
+                        anchors.centerIn: parent
+                    }
+                }
+
                 Rectangle {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
@@ -369,6 +401,150 @@ Window {
 
                     HoverHandler {
                         id: hoverHandler
+                    }
+                }
+            }
+        }
+    }
+
+    // 残局选择弹窗
+    Rectangle {
+        id: endgameSelector
+        anchors.fill: parent
+        color: "#80000000"
+        visible: false
+        z: 15
+
+        Rectangle {
+            width: 400
+            height: 300
+            radius: 10
+            color: "white"
+            border.color: "gray"
+            border.width: 2
+            anchors.centerIn: parent
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 20
+                spacing: 15
+
+                Text {
+                    text: "选择残局挑战"
+                    font.pixelSize: 24
+                    font.bold: true
+                    Layout.alignment: Qt.AlignHCenter
+                }
+
+                ScrollView {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
+                    
+                    ListView {
+                        model: controller ? controller.getEndgameList() : []
+                        spacing: 10
+                        delegate: Rectangle {
+                            width: parent.width
+                            height: 80
+                            color: mouseArea.pressed ? "#f0f0f0" : (mouseArea.containsMouse ? "#f8f8f8" : "white")
+                            radius: 8
+                            border.color: "#cccccc"
+                            border.width: 1
+                            
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.margins: 15
+                                spacing: 15
+                                
+                                Column {
+                                    Layout.fillWidth: true
+                                    spacing: 5
+                                    
+                                    Text {
+                                        text: modelData
+                                        font.pixelSize: 18
+                                        font.bold: true
+                                        color: "#333333"
+                                    }
+                                    
+                                    Text {
+                                        text: controller ? controller.getEndgameDescription(modelData) : ""
+                                        font.pixelSize: 12
+                                        color: "#666666"
+                                        wrapMode: Text.WordWrap
+                                    }
+                                }
+                                
+                                Rectangle {
+                                    width: 60
+                                    height: 25
+                                    radius: 12
+                                    color: getDifficultyColor(controller ? controller.getEndgameDifficulty(modelData) : 1)
+                                    
+                                    Text {
+                                        text: "难度 " + (controller ? controller.getEndgameDifficulty(modelData) : 1)
+                                        font.pixelSize: 10
+                                        color: "white"
+                                        font.bold: true
+                                        anchors.centerIn: parent
+                                    }
+                                    
+                                    function getDifficultyColor(difficulty) {
+                                        switch(difficulty) {
+                                            case 1: return "#4CAF50" // 简单 - 绿色
+                                            case 2: return "#8BC34A" // 容易 - 浅绿色
+                                            case 3: return "#FFC107" // 中等 - 黄色
+                                            case 4: return "#FF9800" // 困难 - 橙色
+                                            case 5: return "#F44336" // 极难 - 红色
+                                            default: return "#757575" // 默认 - 灰色
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            MouseArea {
+                                id: mouseArea
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                onClicked: {
+                                    if (controller) {
+                                        controller.startEndgame(modelData)
+                                        endgameSelector.visible = false
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 10
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 40
+                        color: cancelMouseArea.pressed ? "#f0f0f0" : (cancelMouseArea.containsMouse ? "#f8f8f8" : "#eeeeee")
+                        radius: 5
+                        border.color: "gray"
+                        border.width: 1
+
+                        Text {
+                            text: "取消"
+                            font.pixelSize: 14
+                            color: "black"
+                            anchors.centerIn: parent
+                        }
+                        
+                        MouseArea {
+                            id: cancelMouseArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onClicked: {
+                                endgameSelector.visible = false
+                            }
+                        }
                     }
                 }
             }

@@ -316,7 +316,10 @@ std::vector<std::tuple<ChessMan*, int, int>> ChessAI::generateMoves(ChessMan* bo
                 for (int ty = 0; ty < 10; ++ty) {
                     for (int tx = 0; tx < 9; ++tx) {
                         if ((x != tx || y != ty) && piece->canMove(tx, ty, board)) {
-                            moves.emplace_back(piece, tx, ty);
+                            // 检查移动后是否会造成王对王
+                            if (!wouldCauseKingFacing(piece, tx, ty, board)) {
+                                moves.emplace_back(piece, tx, ty);
+                            }
                         }
                     }
                 }
@@ -354,5 +357,64 @@ void ChessAI::setUseClassicAI(bool useClassic) {
 
 bool ChessAI::getUseClassicAI() const {
     return useClassicAI;
+}
+
+// 王对王检查函数 - 防止AI造成王对王
+bool ChessAI::wouldCauseKingFacing(ChessMan* piece, int toX, int toY, ChessMan* board[10][9]) {
+    // 创建临时棋盘副本
+    ChessMan* tempBoard[10][9];
+    for (int y = 0; y < 10; ++y) {
+        for (int x = 0; x < 9; ++x) {
+            tempBoard[y][x] = board[y][x];
+        }
+    }
+    
+    // 模拟移动
+    int fromX = piece->x();
+    int fromY = piece->y();
+    tempBoard[fromY][fromX] = nullptr;
+    tempBoard[toY][toX] = piece;
+    
+    // 检查王对王
+    ChessMan* redKing = getKing(tempBoard, "红");
+    ChessMan* blackKing = getKing(tempBoard, "黑");
+    
+    if (!redKing || !blackKing) return false;
+    
+    // 获取移动后的王的位置
+    int redKingX = (redKing == piece) ? toX : redKing->x();
+    int redKingY = (redKing == piece) ? toY : redKing->y();
+    int blackKingX = (blackKing == piece) ? toX : blackKing->x();
+    int blackKingY = (blackKing == piece) ? toY : blackKing->y();
+    
+    // 检查是否在同一列
+    if (redKingX == blackKingX) {
+        int minY = qMin(redKingY, blackKingY);
+        int maxY = qMax(redKingY, blackKingY);
+        
+        bool blocked = false;
+        for (int y = minY + 1; y < maxY; ++y) {
+            if (tempBoard[y][redKingX]) {
+                blocked = true;
+                break;
+            }
+        }
+        return !blocked; // 如果没有阻挡，则是王对王
+    }
+    
+    return false;
+}
+
+// 在棋盘上找到指定颜色的王
+ChessMan* ChessAI::getKing(ChessMan* board[10][9], QString color) {
+    for (int y = 0; y < 10; ++y) {
+        for (int x = 0; x < 9; ++x) {
+            ChessMan* piece = board[y][x];
+            if (piece && piece->name().contains("King") && piece->color() == color) {
+                return piece;
+            }
+        }
+    }
+    return nullptr;
 }
 

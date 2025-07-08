@@ -9,6 +9,7 @@
 #include "ChessMan.h"
 #include "ChessInitializer.h"
 #include "ChessAi.h"
+#include "EndgameInitializer.h"
 
 struct CapturePieceInfo {
     QString name;
@@ -31,6 +32,8 @@ class ChessController : public QObject
     Q_PROPERTY(QString checkedPlayer READ checkedPlayer NOTIFY checkedPlayerChanged)
     Q_PROPERTY(bool selfCheckMove READ selfCheckMove NOTIFY selfCheckMoveChanged)
     Q_PROPERTY(bool isAiMode READ isAiMode NOTIFY aiModeChanged)
+    Q_PROPERTY(bool isEndgameMode READ isEndgameMode NOTIFY endgameModeChanged)
+    Q_PROPERTY(QString currentEndgame READ currentEndgame NOTIFY currentEndgameChanged)
 
 public:
     explicit ChessController(QObject* parent = nullptr);
@@ -48,6 +51,8 @@ public:
     QString checkedPlayer() const;
     bool selfCheckMove() const;
     bool isAiMode() const;
+    bool isEndgameMode() const;
+    QString currentEndgame() const;
 
     // QML invokable methods
     Q_INVOKABLE QVariantList getPieces() const;
@@ -56,6 +61,11 @@ public:
     Q_INVOKABLE void handleMove(int fromIndex, int toX, int toY);
     Q_INVOKABLE void toggleAIMode();
     Q_INVOKABLE void switchTurn();
+    Q_INVOKABLE void startEndgame(const QString& endgameName);
+    Q_INVOKABLE QStringList getEndgameList();
+    Q_INVOKABLE void exitEndgameMode();
+    Q_INVOKABLE QString getEndgameDescription(const QString& endgameName);
+    Q_INVOKABLE int getEndgameDifficulty(const QString& endgameName);
     // AI depth and time limit functions removed - not needed for current implementation
 
     // Game logic methods
@@ -79,6 +89,8 @@ signals:
     void checkedPlayerChanged();
     void selfCheckMoveChanged();
     void aiModeChanged();
+    void endgameModeChanged();
+    void currentEndgameChanged();
 
 private:
     ChessMan* m_board[10][9];
@@ -95,5 +107,7 @@ private:
     bool m_isAiMode = false;
     QString aiColor = "黑";
     ChessAI ai;
+    bool m_isEndgameMode = false;
+    QString m_currentEndgame = "";
 };
 

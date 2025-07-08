@@ -75,5 +75,9 @@ private:
     int evaluateCenterControl(ChessMan* board[10][9], QString color);
     void sortMoves(std::vector<std::tuple<ChessMan*, int, int>>& moves, ChessMan* board[10][9]);
     
+    // 王对王检查函数
+    bool wouldCauseKingFacing(ChessMan* piece, int toX, int toY, ChessMan* board[10][9]);
+    ChessMan* getKing(ChessMan* board[10][9], QString color);
+    
     bool useClassicAI = true;
 };
