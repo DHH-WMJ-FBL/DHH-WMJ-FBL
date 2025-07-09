@@ -46,7 +46,7 @@ public:
         return false;
     }
 
-    // 可选：为 QML 保留的接口
+    //为 QML 保留的接口
     bool canMove(int targetX, int targetY, const QList<QObject*>& allPieces) override {
         ChessMan* board[10][9] = {};
         for (QObject* obj : allPieces) {
