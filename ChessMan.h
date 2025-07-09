@@ -2,7 +2,7 @@
 #include <QObject>
 #include <QString>
 #include <QList>
-// QDebug removed - no debug output needed
+
 
 // 默认红下黑上(棋盘)
 class ChessMan : public QObject

@@ -1,6 +1,5 @@
 #pragma once
 #include "ChessMan.h"
-// QDebug removed - no debug output needed
 
 class Rook : public ChessMan {
     Q_OBJECT

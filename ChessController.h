@@ -4,7 +4,6 @@
 #include <QVariantList>
 #include <QVector>
 #include <QString>
-// QDebug removed - no longer needed
 #include <QTimer>
 #include "ChessMan.h"
 #include "ChessInitializer.h"
